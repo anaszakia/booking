@@ -1140,8 +1140,8 @@
                     <label for="location">Lokasi</label>
                     <select id="location" name="location">
                         <option value="all">Semua lokasi</option>
-                        @foreach ($courts->pluck('location')->unique()->sort() as $courtLocation)
-                            <option value="{{ \Illuminate\Support\Str::slug($courtLocation) }}">{{ $courtLocation }}</option>
+                        @foreach ($venues as $venue)
+                            <option value="{{ $venue->ulid }}">{{ $venue->address }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -1187,7 +1187,7 @@
             </div>
             <div class="venue-grid" id="venue-grid">
                 @forelse ($courts as $court)
-                    <article class="venue-card" data-type="{{ $court->court_type }}" data-location="{{ \Illuminate\Support\Str::slug($court->location) }}" data-time="pagi siang malam">
+                    <article class="venue-card" data-type="{{ $court->court_type }}" data-location="{{ $court->venue?->ulid }}" data-time="pagi siang malam">
                         <div class="venue-image">
                             <img src="{{ $court->image_url ?: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=900&q=80' }}" alt="Lapangan padel {{ $court->name }}">
                             <span class="badge">{{ ucfirst($court->court_type) }}</span>
@@ -1195,7 +1195,7 @@
                         </div>
                         <div class="venue-details">
                             <div class="venue-title-row"><h3>{{ $court->name }}</h3></div>
-                            <div class="location"><svg viewBox="0 0 24 24" fill="none"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg> {{ $court->location }}</div>
+                            <div class="location"><svg viewBox="0 0 24 24" fill="none"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg> {{ $court->venue?->address ?? 'Alamat venue belum tersedia' }}</div>
                             <div class="venue-divider"></div>
                             <div class="venue-bottom">
                                 <span class="price"><strong>Rp{{ number_format($court->price_per_hour, 0, ',', '.') }}</strong> <span>/ jam</span></span>

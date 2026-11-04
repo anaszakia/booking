@@ -118,6 +118,12 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" href="{{ route('financial-reports.index') }}">
+                    <span class="nav-icon"><i class="ti ti-chart-bar"></i></span>
+                    <span class="text">Rekap Keuangan</span>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" href="{{ route('venues.index') }}">
                     <span class="nav-icon"><i class="ti ti-map-pin"></i></span>
                     <span class="text">Master Venue</span>
@@ -249,6 +255,18 @@
                     <a class="nav-link" href="{{ route('courts.index') }}">
                         <span class="nav-icon"><i class="ti ti-building-stadium"></i></span>
                         <span class="text">Master Lapangan</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('bookings.index') }}">
+                        <span class="nav-icon"><i class="ti ti-receipt"></i></span>
+                        <span class="text">Booking & Pembayaran</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('financial-reports.index') }}">
+                        <span class="nav-icon"><i class="ti ti-chart-bar"></i></span>
+                        <span class="text">Rekap Keuangan</span>
                     </a>
                 </li>
                 <li class="nav-item">

@@ -13,8 +13,6 @@ class Court extends Model
     protected $fillable = [
         'name',
         'venue_id',
-        'location',
-        'address',
         'court_type',
         'price_per_hour',
         'description',

@@ -32,7 +32,7 @@
                     <div class="row g-2 align-items-center">
                         <div class="col-md-8 col-lg-6">
                             <input type="search" name="search" class="form-control"
-                                value="{{ request('search') }}" placeholder="Cari nama atau lokasi lapangan">
+                                value="{{ request('search') }}" placeholder="Cari nama lapangan, venue, atau alamat">
                         </div>
                         <div class="col-md-auto">
                             <button type="submit" class="btn btn-primary">Cari</button>
@@ -62,12 +62,9 @@
                             <tr>
                                 <td>
                                     <strong>{{ $court->name }}</strong>
-                                    @if ($court->address)
-                                        <div class="small text-muted">{{ $court->address }}</div>
-                                    @endif
                                 </td>
                                 <td>{{ $court->venue?->name ?? 'Belum ditentukan' }}</td>
-                                <td>{{ $court->location }}</td>
+                                <td>{{ $court->venue?->address ?? '-' }}</td>
                                 <td>{{ $court->court_type === 'indoor' ? 'Indoor' : 'Outdoor' }}</td>
                                 <td>Rp{{ number_format($court->price_per_hour, 0, ',', '.') }}</td>
                                 <td>

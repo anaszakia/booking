@@ -7,6 +7,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\CourtController;
+use App\Http\Controllers\FinancialReportController;
 use App\Http\Controllers\SocialLinkController;
 use App\Http\Controllers\VenueController;
 use App\Models\Court;
@@ -80,8 +81,8 @@ Route::get('/jadwal', function () {
     $scheduleCourts = $courts->map(fn (Court $court) => [
         'ulid' => $court->ulid,
         'name' => $court->name,
-        'location' => \Illuminate\Support\Str::slug($court->location),
-        'area' => $court->location,
+        'location' => $court->venue?->ulid,
+        'area' => $court->venue?->address ?? 'Alamat venue belum tersedia',
         'price' => $court->price_per_hour,
         'paymentReady' => $court->venue?->is_active && ($court->venue->qris_path || $court->venue->bankAccounts->isNotEmpty()),
     ])->values();
@@ -99,6 +100,7 @@ Route::middleware(['auth.custom', 'auto.logout'])->group(function () {
         Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
         Route::post('/bookings/{booking}/verify', [BookingController::class, 'verify'])->name('bookings.verify');
         Route::get('/bookings/{booking}/proof', [BookingController::class, 'proof'])->name('bookings.proof');
+        Route::get('/financial-reports', [FinancialReportController::class, 'index'])->name('financial-reports.index');
         Route::resource('/venues', VenueController::class)->except(['show']);
         Route::resource('/social-links', SocialLinkController::class)->except(['show']);
         Route::resource('/menus', MenuController::class);

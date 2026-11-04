@@ -15,8 +15,6 @@ class CourtSeeder extends Seeder
             [
                 'name' => 'Padel Social Club',
                 'venue_id' => $venueId,
-                'location' => 'Kemang, Jakarta Selatan',
-                'address' => 'Kemang, Jakarta Selatan, DKI Jakarta',
                 'court_type' => 'indoor',
                 'price_per_hour' => 250000,
                 'description' => 'Lapangan indoor untuk bermain nyaman sepanjang hari.',
@@ -26,8 +24,6 @@ class CourtSeeder extends Seeder
             [
                 'name' => 'Padel Haus',
                 'venue_id' => $venueId,
-                'location' => 'Puri Indah, Jakarta Barat',
-                'address' => 'Puri Indah, Jakarta Barat, DKI Jakarta',
                 'court_type' => 'outdoor',
                 'price_per_hour' => 200000,
                 'description' => 'Lapangan outdoor dengan suasana terbuka.',
@@ -37,8 +33,6 @@ class CourtSeeder extends Seeder
             [
                 'name' => 'The Court Society',
                 'venue_id' => $venueId,
-                'location' => 'Pluit, Jakarta Utara',
-                'address' => 'Pluit, Jakarta Utara, DKI Jakarta',
                 'court_type' => 'indoor',
                 'price_per_hour' => 275000,
                 'description' => 'Lapangan indoor untuk sesi latihan dan pertandingan.',

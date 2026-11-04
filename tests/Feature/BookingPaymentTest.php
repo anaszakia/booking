@@ -124,7 +124,6 @@ class BookingPaymentTest extends TestCase
         $court = Court::create([
             'name' => 'Lapangan Pembayaran',
             'venue_id' => $venue->id,
-            'location' => 'Jakarta',
             'court_type' => 'indoor',
             'price_per_hour' => 250000,
             'is_active' => true,

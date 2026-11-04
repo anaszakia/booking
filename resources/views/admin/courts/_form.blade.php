@@ -33,24 +33,10 @@
                     @endforeach
                 </select>
                 @error('venue_ulid') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                <div class="form-text">Lokasi dan alamat lapangan mengikuti alamat venue yang dipilih.</div>
                 @if ($venues->isEmpty())
                     <div class="form-text text-danger">Buat dan aktifkan venue terlebih dahulu sebelum menambah lapangan.</div>
                 @endif
-            </div>
-
-            <div class="mb-4">
-                <label for="location" class="form-label">Area / lokasi <span class="text-danger">*</span></label>
-                <input id="location" name="location" type="text" maxlength="120"
-                    class="form-control @error('location') is-invalid @enderror"
-                    value="{{ old('location', $court?->location) }}" placeholder="Contoh: Kemang, Jakarta Selatan" required>
-                @error('location') <div class="invalid-feedback">{{ $message }}</div> @enderror
-            </div>
-
-            <div class="mb-4">
-                <label for="address" class="form-label">Alamat lengkap</label>
-                <textarea id="address" name="address" rows="2"
-                    class="form-control @error('address') is-invalid @enderror">{{ old('address', $court?->address) }}</textarea>
-                @error('address') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
 
             <div class="row">

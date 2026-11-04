@@ -13,13 +13,15 @@ class CourtController extends Controller
     public function index(Request $request): View
     {
         $courts = Court::query()
-            ->with('venue:id,name')
+            ->with('venue:id,name,address')
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search')->trim()->toString();
                 $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
-                        ->orWhere('location', 'like', "%{$search}%")
-                        ->orWhere('address', 'like', "%{$search}%");
+                        ->orWhereHas('venue', function ($venueQuery) use ($search) {
+                            $venueQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('address', 'like', "%{$search}%");
+                        });
                 });
             })
             ->orderBy('name')
@@ -74,8 +76,6 @@ class CourtController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'venue_ulid' => ['required', 'string', 'size:26', 'exists:venues,ulid'],
-            'location' => ['required', 'string', 'max:120'],
-            'address' => ['nullable', 'string', 'max:5000'],
             'court_type' => ['required', 'in:indoor,outdoor'],
             'price_per_hour' => ['required', 'integer', 'min:0', 'max:4294967295'],
             'description' => ['nullable', 'string', 'max:5000'],
