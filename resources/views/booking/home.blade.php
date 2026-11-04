@@ -1228,7 +1228,7 @@
         </section>
 
         <section class="shell cta" id="tentang">
-            <div><h2>Siap untuk rally berikutnya?</h2><p>Lapangan favoritmu mungkin tinggal satu klik lagi.</p></div>
+            <div><h2>Siap untuk rally berikutnya?</h2><p>Booking langsung di website, atau datang ke venue dan minta staf membantu memilih jadwal.</p></div>
             <a class="button" href="#lapangan">Cari lapangan <span aria-hidden="true">↗</span></a>
         </section>
     </main>

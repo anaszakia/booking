@@ -1,4 +1,5 @@
 <?php
+
 namespace Database\Seeders;
 
 use App\Models\Role;
@@ -20,19 +21,24 @@ class RoleSeeder extends Seeder
             ['name' => 'User']
         );
 
+        Role::updateOrCreate(
+            ['slug' => 'staff'],
+            ['name' => 'Staff']
+        );
+
         $superAdmin = User::where('email', 'superadmin@gmail.com')->first();
 
         if ($superAdmin) {
             $superAdmin->update([
-                'name'     => 'Super Admin',
-                'role_id'  => $admin->id,
+                'name' => 'Super Admin',
+                'role_id' => $admin->id,
             ]);
         } else {
             $superAdmin = User::create([
-                'name'     => 'Super Admin',
-                'email'    => 'superadmin@gmail.com',
+                'name' => 'Super Admin',
+                'email' => 'superadmin@gmail.com',
                 'password' => Hash::make('12345678'),
-                'role_id'  => $admin->id,
+                'role_id' => $admin->id,
             ]);
         }
 

@@ -94,11 +94,18 @@ Route::get('/jadwal', function () {
 Route::middleware(['auth.custom', 'auto.logout'])->group(function () {
     Route::get('/dashboard', fn() => view('dashboard'))->name('dashboard');
 
+    Route::middleware(['role:superadmin,staff'])->group(function () {
+        Route::get('/booking-calendar', [BookingController::class, 'calendar'])->name('bookings.calendar');
+        Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
+        Route::get('/bookings/create', [BookingController::class, 'createStaffBooking'])->name('bookings.create');
+        Route::post('/bookings', [BookingController::class, 'storeStaffBooking'])->name('bookings.store');
+    });
+
     // Menu management - hanya admin
     Route::middleware(['role:superadmin'])->group(function () {
         Route::resource('/courts', CourtController::class)->except(['show']);
-        Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
         Route::post('/bookings/{booking}/verify', [BookingController::class, 'verify'])->name('bookings.verify');
+        Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
         Route::get('/bookings/{booking}/proof', [BookingController::class, 'proof'])->name('bookings.proof');
         Route::get('/financial-reports', [FinancialReportController::class, 'index'])->name('financial-reports.index');
         Route::resource('/venues', VenueController::class)->except(['show']);

@@ -112,12 +112,6 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('bookings.index') }}">
-                    <span class="nav-icon"><i class="ti ti-receipt"></i></span>
-                    <span class="text">Booking & Pembayaran</span>
-                </a>
-            </li>
-            <li class="nav-item">
                 <a class="nav-link" href="{{ route('financial-reports.index') }}">
                     <span class="nav-icon"><i class="ti ti-chart-bar"></i></span>
                     <span class="text">Rekap Keuangan</span>
@@ -133,6 +127,26 @@
                 <a class="nav-link" href="{{ route('social-links.index') }}">
                     <span class="nav-icon"><i class="ti ti-brand-instagram"></i></span>
                     <span class="text">Sosial Media</span>
+                </a>
+            </li>
+        @endif
+        @if ($user?->roles->contains('slug', 'superadmin') || $user?->roles->contains('slug', 'staff'))
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('bookings.calendar') }}">
+                    <span class="nav-icon"><i class="ti ti-calendar-month"></i></span>
+                    <span class="text">Kalender Booking</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('bookings.index') }}">
+                    <span class="nav-icon"><i class="ti ti-receipt"></i></span>
+                    <span class="text">Daftar Booking</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('bookings.create') }}">
+                    <span class="nav-icon"><i class="ti ti-calendar-plus"></i></span>
+                    <span class="text">Booking via Staff</span>
                 </a>
             </li>
         @endif
@@ -258,12 +272,6 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('bookings.index') }}">
-                        <span class="nav-icon"><i class="ti ti-receipt"></i></span>
-                        <span class="text">Booking & Pembayaran</span>
-                    </a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link" href="{{ route('financial-reports.index') }}">
                         <span class="nav-icon"><i class="ti ti-chart-bar"></i></span>
                         <span class="text">Rekap Keuangan</span>
@@ -279,6 +287,26 @@
                     <a class="nav-link" href="{{ route('social-links.index') }}">
                         <span class="nav-icon"><i class="ti ti-brand-instagram"></i></span>
                         <span class="text">Sosial Media</span>
+                    </a>
+                </li>
+            @endif
+            @if ($user?->roles->contains('slug', 'superadmin') || $user?->roles->contains('slug', 'staff'))
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('bookings.calendar') }}">
+                        <span class="nav-icon"><i class="ti ti-calendar-month"></i></span>
+                        <span class="text">Kalender Booking</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('bookings.index') }}">
+                        <span class="nav-icon"><i class="ti ti-receipt"></i></span>
+                        <span class="text">Daftar Booking</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('bookings.create') }}">
+                        <span class="nav-icon"><i class="ti ti-calendar-plus"></i></span>
+                        <span class="text">Booking via Staff</span>
                     </a>
                 </li>
             @endif

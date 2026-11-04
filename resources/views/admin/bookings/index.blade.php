@@ -13,6 +13,7 @@
                 </ol>
             </nav>
         </div>
+        <a href="{{ route('bookings.create') }}" class="btn btn-primary"><i class="ti ti-calendar-plus me-1"></i> Buat Booking</a>
     </div>
 
     @if (session('success')) <div class="alert alert-success">{{ session('success') }}</div> @endif
@@ -23,7 +24,7 @@
             <div class="table-responsive">
                 <table class="table table-hover table-centered mb-0">
                     <thead>
-                        <tr><th>Nomor Booking</th><th>Pemesan</th><th>Lapangan / Venue</th><th>Jadwal</th><th>Total</th><th>Status</th><th>Bukti & Aksi</th></tr>
+                        <tr><th>Nomor Booking</th><th>Pemesan</th><th>Lapangan / Venue</th><th>Jadwal</th><th>Total</th><th>Asal / Pembayaran</th><th>Status</th><th>Aksi</th></tr>
                     </thead>
                     <tbody>
                         @forelse ($bookings as $booking)
@@ -33,6 +34,8 @@
                                     'pending_verification' => 'Menunggu verifikasi',
                                     'confirmed' => 'Dikonfirmasi',
                                     'rejected' => 'Ditolak',
+                                    'cancelled' => 'Dibatalkan',
+                                    'canceled' => 'Dibatalkan',
                                     'expired' => 'Kedaluwarsa',
                                 ];
                             @endphp
@@ -43,6 +46,17 @@
                                 <td>{{ $booking->booking_date->format('d/m/Y') }} · {{ substr($booking->booking_time, 0, 5) }}</td>
                                 <td>Rp{{ number_format($booking->amount, 0, ',', '.') }}</td>
                                 <td>
+                                    <span class="badge {{ $booking->booking_source === 'staff' ? 'bg-primary-subtle text-primary-emphasis' : 'bg-secondary-subtle text-secondary-emphasis' }}">
+                                        {{ $booking->booking_source === 'staff' ? 'Staff' : 'Website' }}
+                                    </span>
+                                    @if ($booking->createdBy)
+                                        <div class="small text-muted mt-1">{{ $booking->createdBy->name }}</div>
+                                    @endif
+                                    @if ($booking->payment_method)
+                                        <div class="small text-muted mt-1">{{ ['cash' => 'Tunai', 'qris' => 'QRIS', 'bank_transfer' => 'Transfer bank'][$booking->payment_method] ?? $booking->payment_method }}</div>
+                                    @endif
+                                </td>
+                                <td>
                                     <span class="badge {{ $booking->status === 'confirmed' ? 'bg-success-subtle text-success-emphasis' : ($booking->status === 'pending_verification' ? 'bg-warning-subtle text-warning-emphasis' : 'bg-secondary-subtle text-secondary-emphasis') }}">
                                         {{ $statusLabels[$booking->status] ?? $booking->status }}
                                     </span>
@@ -51,12 +65,12 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if ($booking->payment_proof_path)
+                                    @if ($booking->payment_proof_path && $isAdmin)
                                         <a href="{{ route('bookings.proof', $booking) }}" class="js-preview-payment-proof" data-booking-number="{{ $booking->booking_number }}">Lihat bukti</a>
                                     @else
-                                        <span class="text-muted">Belum ada</span>
+                                        <span class="text-muted">{{ $booking->payment_proof_path ? 'Bukti tersedia' : '—' }}</span>
                                     @endif
-                                    @if ($booking->status === 'pending_verification')
+                                    @if ($booking->status === 'pending_verification' && $isAdmin)
                                         <div class="d-flex gap-1 mt-2">
                                             <form action="{{ route('bookings.verify', $booking) }}" method="POST">
                                                 @csrf
@@ -70,10 +84,20 @@
                                             </form>
                                         </div>
                                     @endif
+                                    @if (in_array($booking->status, \App\Models\Booking::ACTIVE_STATUSES, true) && $isAdmin)
+                                        <form action="{{ route('bookings.cancel', $booking) }}" method="POST" class="mt-2">
+                                            @csrf
+                                            <button class="btn btn-sm btn-white text-danger" type="submit"
+                                                data-confirm="Batalkan booking {{ $booking->booking_number }}? Slot akan dilepas dan bisa dipesan kembali."
+                                                data-confirm-button="Ya, Batalkan">
+                                                <i class="ti ti-calendar-x me-1"></i> Batalkan
+                                            </button>
+                                        </form>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="7" class="text-center text-muted py-5">Belum ada booking.</td></tr>
+                            <tr><td colspan="8" class="text-center text-muted py-5">Belum ada booking.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

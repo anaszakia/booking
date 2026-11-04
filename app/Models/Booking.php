@@ -16,6 +16,9 @@ class Booking extends Model
     protected $fillable = [
         'court_id',
         'venue_id',
+        'created_by',
+        'booking_source',
+        'payment_method',
         'customer_name',
         'customer_phone',
         'customer_email',
@@ -87,6 +90,11 @@ class Booking extends Model
     public function venue(): BelongsTo
     {
         return $this->belongsTo(Venue::class);
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function scopeBlocksSlot(Builder $query): Builder

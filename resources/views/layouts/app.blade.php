@@ -82,6 +82,7 @@
                     e.preventDefault();
 
                     const message = el.getAttribute('data-confirm') || 'Yakin ingin melanjutkan?';
+                    const confirmButtonText = el.getAttribute('data-confirm-button') || 'Ya, Hapus!';
                     const form    = el.closest('form');
 
                     Swal.fire({
@@ -91,7 +92,7 @@
                         showCancelButton: true,
                         confirmButtonColor: '#dc3545',
                         cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Ya, Hapus!',
+                        confirmButtonText,
                         cancelButtonText: 'Batal',
                     }).then((result) => {
                         if (result.isConfirmed) {
