@@ -425,7 +425,7 @@
 
         venues.forEach((venue) => {
             const option = document.createElement('option');
-            option.value = venue.id;
+            option.value = venue.ulid;
             option.textContent = venue.name;
             venueFilter.append(option);
         });
@@ -446,7 +446,7 @@
             const dayNumber = date.getDate();
             const dateString = dateKey(date);
             return venues
-                .filter((venue) => selectedVenue === 'all' || selectedVenue === String(venue.id))
+                .filter((venue) => selectedVenue === 'all' || selectedVenue === venue.ulid)
                 .flatMap((venue) => hourSlots.map((time, slotIndex) => ({
                     venue,
                     time,
@@ -454,7 +454,7 @@
                         && (dayNumber + venues.indexOf(venue) * 3 + slotIndex * 2) % 7 !== 0
                         && (dayNumber + venues.indexOf(venue) + slotIndex) % 11 !== 0
                         && !savedBookings.some((booking) => (
-                            String(booking.venueId) === String(venue.id)
+                            String(booking.venueId) === venue.ulid
                             && booking.date === dateString
                             && booking.time === time
                         )),
@@ -487,7 +487,7 @@
             slotList.innerHTML = slots.map((slot, index) => {
                 const status = slot.available ? 'Tersedia' : 'Penuh';
                 const bookUrl = new URLSearchParams({
-                    court: slot.venue.id,
+                    court: slot.venue.ulid,
                     venue: slot.venue.name,
                     date: dateKey(date),
                     slot: slot.time,

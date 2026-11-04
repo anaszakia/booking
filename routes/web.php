@@ -6,7 +6,11 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\CourtController;
+use App\Http\Controllers\SocialLinkController;
+use App\Http\Controllers\VenueSettingController;
 use App\Models\Court;
+use App\Models\SocialLink;
+use App\Models\VenueSetting;
 use Laravel\Passkeys\Http\Controllers\PasskeyConfirmationController;
 use Laravel\Passkeys\Http\Controllers\PasskeyLoginController;
 use Laravel\Passkeys\Http\Controllers\PasskeyRegistrationController;
@@ -49,11 +53,13 @@ Route::middleware(['auth:web', 'auth.custom'])->group(function () {
 
 Route::get('/', fn() => view('booking.home', [
     'courts' => Court::active()->orderBy('name')->get(),
+    'venueSetting' => VenueSetting::query()->first() ?? new VenueSetting(VenueSetting::defaults()),
+    'socialLinks' => SocialLink::active()->orderBy('sort_order')->orderBy('name')->get(),
 ]))->name('home');
 Route::get('/jadwal', function () {
     $courts = Court::active()->orderBy('name')->get();
     $scheduleCourts = $courts->map(fn (Court $court) => [
-        'id' => $court->id,
+        'ulid' => $court->ulid,
         'name' => $court->name,
         'location' => \Illuminate\Support\Str::slug($court->location),
         'area' => $court->location,
@@ -70,6 +76,9 @@ Route::middleware(['auth.custom', 'auto.logout'])->group(function () {
     // Menu management - hanya admin
     Route::middleware(['role:superadmin'])->group(function () {
         Route::resource('/courts', CourtController::class)->except(['show']);
+        Route::get('/venue-settings/{venueSetting}/edit', [VenueSettingController::class, 'edit'])->name('venue-settings.edit');
+        Route::put('/venue-settings/{venueSetting}', [VenueSettingController::class, 'update'])->name('venue-settings.update');
+        Route::resource('/social-links', SocialLinkController::class)->except(['show']);
         Route::resource('/menus', MenuController::class);
         Route::resource('/roles', RoleController::class);
         Route::post('/permissions/sync-routes', [PermissionController::class, 'syncRoutes'])->name('permissions.sync-routes');

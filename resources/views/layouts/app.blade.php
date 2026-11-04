@@ -37,6 +37,10 @@
         [data-bs-theme="light"] .admin-form .form-check-label {
             color: #000;
         }
+        .master-form .form-control,
+        .master-form .form-control::placeholder {
+            color: #000 !important;
+        }
     </style>
     @vite(['resources/js/app.js'])
 

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Symfony\Component\Uid\Ulid;
 
 class Court extends Model
 {
@@ -18,6 +19,13 @@ class Court extends Model
         'is_active',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (Court $court): void {
+            $court->ulid ??= (string) new Ulid;
+        });
+    }
+
     protected function casts(): array
     {
         return [
@@ -29,5 +37,10 @@ class Court extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'ulid';
     }
 }

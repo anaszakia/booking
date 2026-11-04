@@ -1,4 +1,12 @@
-<form action="{{ $court ? route('courts.update', $court) : route('courts.store') }}" method="POST">
+<style>
+    .court-form .form-control,
+    .court-form .form-select,
+    .court-form .form-control::placeholder {
+        color: #000 !important;
+    }
+</style>
+
+<form class="court-form" action="{{ $court ? route('courts.update', $court) : route('courts.store') }}" method="POST">
     @csrf
     @if ($court)
         @method('PUT')

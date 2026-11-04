@@ -1180,7 +1180,7 @@
                             <div class="venue-divider"></div>
                             <div class="venue-bottom">
                                 <span class="price"><strong>Rp{{ number_format($court->price_per_hour, 0, ',', '.') }}</strong> <span>/ jam</span></span>
-                                <button class="button small-button book-button" type="button" data-venue="{{ $court->name }}" data-venue-id="{{ $court->id }}">Pilih jadwal</button>
+                                <button class="button small-button book-button" type="button" data-venue="{{ $court->name }}" data-venue-ulid="{{ $court->ulid }}">Pilih jadwal</button>
                             </div>
                         </div>
                     </article>
@@ -1223,29 +1223,30 @@
                     <h2 class="footer-heading">Lokasi</h2>
                     <div class="footer-address">
                         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg>
-                        <span>Area Kemang,<br>Jakarta Selatan, DKI Jakarta</span>
+                        <span>{{ $venueSetting->address }}</span>
                     </div>
                 </div>
                 <div>
                     <h2 class="footer-heading">Ikuti Rally</h2>
                     <div class="footer-socials">
-                        <a class="footer-social" href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram Rally (tautan contoh)">
-                            <span class="social-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg></span>
-                            Instagram
-                        </a>
-                        <a class="footer-social" href="https://www.tiktok.com/" target="_blank" rel="noopener noreferrer" aria-label="TikTok Rally (tautan contoh)">
-                            <span class="social-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 4v10.5a4.5 4.5 0 1 1-4-4.47M14 4c.5 3 2.5 4.5 5 4.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                            TikTok
-                        </a>
+                        @foreach ($socialLinks as $socialLink)
+                            <a class="footer-social" href="{{ $socialLink->url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $socialLink->name }}">
+                                <span class="social-icon" aria-hidden="true">{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($socialLink->name, 0, 1)) }}</span>
+                                {{ $socialLink->name }}
+                            </a>
+                        @endforeach
+                        @if ($socialLinks->isEmpty())
+                            <span class="footer-address">Tautan sosial media belum tersedia.</span>
+                        @endif
                     </div>
                 </div>
                 <div>
                     <h2 class="footer-heading">Temukan kami</h2>
                     <div class="footer-map">
-                        <div id="venue-map" role="application" aria-label="Peta interaktif area Kemang, Jakarta Selatan"></div>
+                        <div id="venue-map" role="application" aria-label="Peta interaktif {{ $venueSetting->address }}"></div>
                         <div class="map-caption">
-                            <span>Kemang, Jakarta Selatan</span>
-                            <a href="https://www.google.com/maps/search/?api=1&query=Kemang%2C+Jakarta+Selatan" target="_blank" rel="noopener noreferrer">Buka Maps ↗</a>
+                            <span>{{ $venueSetting->address }}</span>
+                            <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($venueSetting->latitude . ',' . $venueSetting->longitude) }}" target="_blank" rel="noopener noreferrer">Buka Maps ↗</a>
                         </div>
                     </div>
                 </div>
@@ -1332,7 +1333,7 @@
         const bookingAvailability = document.getElementById('booking-availability');
         const bookingSubmit = bookingForm.querySelector('[type="submit"]');
         const bookingSlotTimes = ['07:00', '09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00'];
-        const bookingVenueOrder = [...document.querySelectorAll('.book-button')].map((button) => button.dataset.venueId);
+        const bookingVenueOrder = [...document.querySelectorAll('.book-button')].map((button) => button.dataset.venueUlid);
         const bookingStorageKey = 'rally-booked-slots';
         let selectedBookingVenue = null;
         let selectedBookingTime = '';
@@ -1497,7 +1498,7 @@
         });
 
         function openBooking(button, preferredDate = searchDate.value, preferredSlot = '') {
-            selectedBookingVenue = button.dataset.venueId;
+            selectedBookingVenue = button.dataset.venueUlid;
             document.getElementById('booking-venue').textContent = button.dataset.venue;
             bookingDateField.value = preferredDate && preferredDate >= localToday ? preferredDate : localToday;
             renderBookingSlots();
@@ -1633,7 +1634,7 @@
         const datePattern = /^\d{4}-\d{2}-\d{2}$/;
         const targetBookButton = [...document.querySelectorAll('.book-button')]
             .find((button) => scheduledCourt
-                ? button.dataset.venueId === scheduledCourt
+                ? button.dataset.venueUlid === scheduledCourt
                 : button.dataset.venue === scheduledVenue);
 
         if (
@@ -1732,14 +1733,15 @@
 
         const mapElement = document.getElementById('venue-map');
         if (window.L) {
-            const venueMap = L.map(mapElement, { scrollWheelZoom: false }).setView([-6.2607, 106.8167], 14);
+            const venueCoordinates = [{{ $venueSetting->latitude }}, {{ $venueSetting->longitude }}];
+            const venueMap = L.map(mapElement, { scrollWheelZoom: false }).setView(venueCoordinates, {{ $venueSetting->map_zoom }});
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             }).addTo(venueMap);
-            L.marker([-6.2607, 106.8167])
+            L.marker(venueCoordinates)
                 .addTo(venueMap)
-                .bindPopup('Area Kemang, Jakarta Selatan');
+                .bindPopup(@json($venueSetting->name . ' · ' . $venueSetting->address));
             window.setTimeout(() => venueMap.invalidateSize(), 100);
         } else {
             console.error('Leaflet gagal dimuat; peta lokasi tidak tersedia.');

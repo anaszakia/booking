@@ -13,6 +13,8 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             MenuSeeder::class,
             CourtSeeder::class,
+            VenueSettingSeeder::class,
+            SocialLinkSeeder::class,
         ]);
     }
 }

@@ -29,6 +29,10 @@ class CourtTest extends TestCase
         ]);
 
         $this->assertSame(250000, $activeCourt->price_per_hour);
+        $this->assertMatchesRegularExpression('/^[0-9A-HJKMNP-TV-Z]{26}$/', $activeCourt->ulid);
+        $this->assertSame('ulid', $activeCourt->getRouteKeyName());
+        $this->assertStringContainsString($activeCourt->ulid, route('courts.edit', $activeCourt));
+        $this->assertSame($activeCourt->id, Court::resolveRouteBinding($activeCourt->ulid)?->id);
         $this->assertCount(1, Court::active()->get());
         $this->assertSame('Padel Kemang', Court::active()->first()->name);
     }
@@ -49,10 +53,12 @@ class CourtTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee('Padel Social Club')
+            ->assertSee($activeCourtUlid = Court::where('name', 'Padel Social Club')->value('ulid'))
             ->assertDontSee('Lapangan Arsip');
         $this->get('/jadwal')
             ->assertOk()
             ->assertSee('Padel Social Club')
+            ->assertSee($activeCourtUlid)
             ->assertDontSee('Lapangan Arsip');
     }
 }
