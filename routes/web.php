@@ -1,16 +1,17 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BookingController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\CourtController;
 use App\Http\Controllers\SocialLinkController;
-use App\Http\Controllers\VenueSettingController;
+use App\Http\Controllers\VenueController;
 use App\Models\Court;
 use App\Models\SocialLink;
-use App\Models\VenueSetting;
+use App\Models\Venue;
 use Laravel\Passkeys\Http\Controllers\PasskeyConfirmationController;
 use Laravel\Passkeys\Http\Controllers\PasskeyLoginController;
 use Laravel\Passkeys\Http\Controllers\PasskeyRegistrationController;
@@ -29,6 +30,13 @@ Route::post('/reset-password', fn() => redirect()->route('login'))->middleware('
 Route::get('/otp-verification', fn() => view('auth.otp-verification'))->name('otp.verification');
 Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
 Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+Route::get('/booking/availability', [BookingController::class, 'availability'])->name('booking.availability');
+Route::post('/booking', [BookingController::class, 'store'])->middleware('throttle:10,1')->name('booking.store');
+Route::get('/booking/{booking}/payment', [BookingController::class, 'payment'])->name('booking.payment');
+Route::get('/upload-bukti-pembayaran', [BookingController::class, 'uploadForm'])->name('booking.upload-form');
+Route::post('/upload-bukti-pembayaran', [BookingController::class, 'uploadProof'])
+    ->middleware('throttle:5,1')
+    ->name('booking.upload-proof');
 
 // Passkeys
 Route::get('/passkeys/login/options', [PasskeyLoginController::class, 'index'])
@@ -51,22 +59,34 @@ Route::middleware(['auth:web', 'auth.custom'])->group(function () {
         ->name('passkey.destroy');
 });
 
-Route::get('/', fn() => view('booking.home', [
-    'courts' => Court::active()->orderBy('name')->get(),
-    'venueSetting' => VenueSetting::query()->first() ?? new VenueSetting(VenueSetting::defaults()),
-    'socialLinks' => SocialLink::active()->orderBy('sort_order')->orderBy('name')->get(),
-]))->name('home');
+Route::get('/', function () {
+    $courts = Court::active()->with(['venue.bankAccounts'])->orderBy('name')->get();
+    $venues = Venue::active()->orderBy('name')->get();
+    $primaryVenue = $venues->first();
+    $venueMapPoints = $venues->map(fn (Venue $venue) => [
+        'name' => $venue->name,
+        'address' => $venue->address,
+        'latitude' => $venue->latitude,
+        'longitude' => $venue->longitude,
+    ])->values();
+    $socialLinks = SocialLink::active()->orderBy('sort_order')->orderBy('name')->get();
+
+    return view('booking.home', compact('courts', 'venues', 'primaryVenue', 'venueMapPoints', 'socialLinks'));
+})->name('home');
 Route::get('/jadwal', function () {
-    $courts = Court::active()->orderBy('name')->get();
+    $courts = Court::active()->with(['venue.bankAccounts'])->orderBy('name')->get();
+    $venues = Venue::active()->orderBy('name')->get();
+    $primaryVenue = $venues->first();
     $scheduleCourts = $courts->map(fn (Court $court) => [
         'ulid' => $court->ulid,
         'name' => $court->name,
         'location' => \Illuminate\Support\Str::slug($court->location),
         'area' => $court->location,
         'price' => $court->price_per_hour,
+        'paymentReady' => $court->venue?->is_active && ($court->venue->qris_path || $court->venue->bankAccounts->isNotEmpty()),
     ])->values();
 
-    return view('booking.schedule', compact('courts', 'scheduleCourts'));
+    return view('booking.schedule', compact('courts', 'venues', 'primaryVenue', 'scheduleCourts'));
 })->name('schedule');
 
 // Protected routes
@@ -76,8 +96,10 @@ Route::middleware(['auth.custom', 'auto.logout'])->group(function () {
     // Menu management - hanya admin
     Route::middleware(['role:superadmin'])->group(function () {
         Route::resource('/courts', CourtController::class)->except(['show']);
-        Route::get('/venue-settings/{venueSetting}/edit', [VenueSettingController::class, 'edit'])->name('venue-settings.edit');
-        Route::put('/venue-settings/{venueSetting}', [VenueSettingController::class, 'update'])->name('venue-settings.update');
+        Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
+        Route::post('/bookings/{booking}/verify', [BookingController::class, 'verify'])->name('bookings.verify');
+        Route::get('/bookings/{booking}/proof', [BookingController::class, 'proof'])->name('bookings.proof');
+        Route::resource('/venues', VenueController::class)->except(['show']);
         Route::resource('/social-links', SocialLinkController::class)->except(['show']);
         Route::resource('/menus', MenuController::class);
         Route::resource('/roles', RoleController::class);

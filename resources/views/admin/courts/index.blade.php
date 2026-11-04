@@ -21,6 +21,9 @@
     @if (session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
+    @if (session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
 
     <div class="card card-lg">
         <div class="card-body p-0">
@@ -46,6 +49,7 @@
                     <thead>
                         <tr>
                             <th>Nama Lapangan</th>
+                            <th>Venue</th>
                             <th>Lokasi</th>
                             <th>Tipe</th>
                             <th>Harga / Jam</th>
@@ -62,6 +66,7 @@
                                         <div class="small text-muted">{{ $court->address }}</div>
                                     @endif
                                 </td>
+                                <td>{{ $court->venue?->name ?? 'Belum ditentukan' }}</td>
                                 <td>{{ $court->location }}</td>
                                 <td>{{ $court->court_type === 'indoor' ? 'Indoor' : 'Outdoor' }}</td>
                                 <td>Rp{{ number_format($court->price_per_hour, 0, ',', '.') }}</td>
@@ -90,7 +95,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-5">
+                                <td colspan="7" class="text-center text-muted py-5">
                                     Belum ada data lapangan. Tambahkan lapangan pertama untuk memulai.
                                 </td>
                             </tr>

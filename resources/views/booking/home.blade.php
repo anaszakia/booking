@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0b110e">
-    <title>Rally — Booking Lapangan Padel</title>
+    <title>{{ $primaryVenue?->name ?? 'Rally Padel' }} — Booking Lapangan Padel</title>
     <script>
         (() => {
             const savedTheme = localStorage.getItem('rally-theme');
@@ -15,6 +15,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <style>
         :root {
@@ -34,6 +35,7 @@
         .shell { width: min(1180px, calc(100% - 48px)); margin: 0 auto; }
         .site-header { height: 82px; display: flex; align-items: center; justify-content: space-between; }
         .brand { display: inline-flex; gap: 10px; align-items: center; font: 800 24px "Manrope", sans-serif; letter-spacing: -1.5px; }
+        .brand-logo { width: 31px; height: 31px; flex: 0 0 auto; border-radius: 9px; object-fit: cover; }
         .brand-mark { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 10px; background: var(--green); color: var(--lime); }
         .brand-mark svg { width: 19px; }
         .nav-links { display: flex; align-items: center; gap: 36px; color: #68746c; font-size: 13px; font-weight: 600; }
@@ -42,6 +44,7 @@
         .login-link { color: #38463d; }
         .button { display: inline-flex; justify-content: center; align-items: center; gap: 9px; border: 0; border-radius: 9px; padding: 13px 19px; background: var(--green); color: #fff; font-weight: 700; cursor: pointer; transition: background .2s, transform .2s; }
         .button:hover { background: #194a34; transform: translateY(-1px); }
+        .button:disabled { opacity: .58; cursor: not-allowed; transform: none; }
         .button svg { width: 16px; }
         .hero { position: relative; min-height: 490px; overflow: hidden; display: flex; align-items: center; border-radius: 18px; background: #1c382c; color: white; }
         .hero::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(13, 30, 22, .9) 0%, rgba(13, 30, 22, .69) 43%, rgba(13, 30, 22, .12) 100%), url("https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=2000&q=85") center 52% / cover; }
@@ -622,7 +625,8 @@
             padding-bottom: 48px;
         }
         .footer-about { max-width: 240px; }
-        .footer-about .footer-brand { display: inline-flex; margin-bottom: 15px; font-size: 24px; }
+        .footer-about .footer-brand { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 15px; font-size: 24px; }
+        .footer-brand-logo { width: 30px; height: 30px; border-radius: 8px; object-fit: cover; }
         .footer-about p { color: #8d9a8f; font-size: 12px; line-height: 1.8; }
         .footer-heading {
             margin: 4px 0 17px;
@@ -632,6 +636,9 @@
         }
         .footer-address { display: flex; align-items: flex-start; gap: 10px; color: #a4b0a5; font-size: 11px; line-height: 1.7; }
         .footer-address svg { width: 17px; flex: 0 0 auto; margin-top: 1px; color: var(--lime); }
+        .footer-venues { display: flex; flex-direction: column; gap: 13px; }
+        .footer-venues .footer-address { align-items: center; }
+        .footer-venues .footer-address img { flex: 0 0 auto; }
         .footer-socials { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
         .footer-social {
             display: inline-flex;
@@ -1063,15 +1070,20 @@
 </head>
 <body>
     <header class="shell site-header">
-        <a class="brand" href="{{ route('home') }}" aria-label="Rally, beranda">
-            <span class="brand-mark" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M5 19 18.5 5M8 5l11 11M5 8l11 11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
-            </span>
-            rally<span style="color:#6f8b70">.</span>
+        <a class="brand" href="{{ route('home') }}" aria-label="{{ $primaryVenue?->name ?? 'Rally Padel' }}, beranda">
+            @if ($primaryVenue?->logo_path)
+                <img class="brand-logo" src="{{ minio_url($primaryVenue->logo_path) }}" alt="">
+            @else
+                <span class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M5 19 18.5 5M8 5l11 11M5 8l11 11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+                </span>
+            @endif
+            {{ $primaryVenue?->name ?? 'Rally' }}<span style="color:#6f8b70">.</span>
         </a>
         <nav class="nav-links" aria-label="Navigasi utama">
             <a href="#lapangan">Cari lapangan</a>
             <a href="{{ route('schedule') }}">Lihat jadwal</a>
+            <a href="{{ route('booking.upload-form') }}">Upload bukti bayar</a>
             <a href="#keunggulan">Cara kerja</a>
             <a href="#tentang">Tentang kami</a>
         </nav>
@@ -1087,6 +1099,12 @@
         </div>
     </header>
 
+    @if ($errors->any())
+        <div class="shell" role="alert" style="margin-top:16px;padding:13px 16px;border:1px solid #efc5bb;border-radius:10px;background:#fff2ee;color:#8f3828;font-size:13px">
+            {{ $errors->first() }}
+        </div>
+    @endif
+
     <main>
         <section class="shell hero" aria-labelledby="hero-title">
             <div class="hero-content">
@@ -1096,13 +1114,14 @@
                 <div class="hero-actions">
                     <a class="button" href="#lapangan">Temukan lapangan <span aria-hidden="true">↗</span></a>
                     <a class="hero-secondary" href="{{ route('schedule') }}">Lihat semua jadwal <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+                    <a class="hero-secondary" href="{{ route('booking.upload-form') }}">Upload bukti bayar <span aria-hidden="true">↗</span></a>
                 </div>
             </div>
             <aside class="hero-side-card" aria-label="Contoh ketersediaan lapangan">
                 <div class="hero-side-top"><span class="live-pill">Lapangan aktif</span><span class="side-number">{{ str_pad((string) $courts->count(), 2, '0', STR_PAD_LEFT) }}</span></div>
                 <strong>Game on tonight.</strong>
                 <p>Temukan slot dan ajak timmu main.</p>
-                <div class="side-slot"><span>Jadwal contoh hari ini</span><span>↗</span></div>
+                <div class="side-slot"><span>Jadwal hari ini</span><span>↗</span></div>
             </aside>
             <div class="hero-note">
                 <div class="avatar-stack" aria-hidden="true">
@@ -1180,7 +1199,9 @@
                             <div class="venue-divider"></div>
                             <div class="venue-bottom">
                                 <span class="price"><strong>Rp{{ number_format($court->price_per_hour, 0, ',', '.') }}</strong> <span>/ jam</span></span>
-                                <button class="button small-button book-button" type="button" data-venue="{{ $court->name }}" data-venue-ulid="{{ $court->ulid }}">Pilih jadwal</button>
+                                <button class="button small-button book-button" type="button" data-venue="{{ $court->name }}" data-venue-ulid="{{ $court->ulid }}" @disabled(! $court->venue?->is_active || (! $court->venue->qris_path && $court->venue->bankAccounts->isEmpty()))>
+                                    {{ ! $court->venue?->is_active || (! $court->venue->qris_path && $court->venue->bankAccounts->isEmpty()) ? 'Pembayaran belum tersedia' : 'Pilih jadwal' }}
+                                </button>
                             </div>
                         </div>
                     </article>
@@ -1216,14 +1237,29 @@
         <div class="shell">
             <div class="footer-grid">
                 <div class="footer-about">
-                    <a class="footer-brand" href="{{ route('home') }}">rally<span style="color:#6f8b70">.</span></a>
+                    <a class="footer-brand" href="{{ route('home') }}">
+                        @if ($primaryVenue?->logo_path)
+                            <img class="footer-brand-logo" src="{{ minio_url($primaryVenue->logo_path) }}" alt="">
+                        @endif
+                        {{ $primaryVenue?->name ?? 'Rally' }}<span style="color:#6f8b70">.</span>
+                    </a>
                     <p>Temukan lapangan, kumpulkan teman, dan nikmati permainan. Semua rally dimulai dari sini.</p>
                 </div>
                 <div>
-                    <h2 class="footer-heading">Lokasi</h2>
-                    <div class="footer-address">
-                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg>
-                        <span>{{ $venueSetting->address }}</span>
+                    <h2 class="footer-heading">Alamat</h2>
+                    <div class="footer-venues">
+                        @forelse ($venues as $venue)
+                            <div class="footer-address">
+                                @if ($venue->logo_path)
+                                    <img src="{{ minio_url($venue->logo_path) }}" alt="Logo {{ $venue->name }}" width="30" height="30" class="rounded object-fit-cover">
+                                @else
+                                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg>
+                                @endif
+                                <span><strong>{{ $venue->name }}</strong><br>{{ $venue->address }}</span>
+                            </div>
+                        @empty
+                            <span class="footer-address">Informasi venue belum tersedia.</span>
+                        @endforelse
                     </div>
                 </div>
                 <div>
@@ -1231,7 +1267,7 @@
                     <div class="footer-socials">
                         @foreach ($socialLinks as $socialLink)
                             <a class="footer-social" href="{{ $socialLink->url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $socialLink->name }}">
-                                <span class="social-icon" aria-hidden="true">{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($socialLink->name, 0, 1)) }}</span>
+                                <span class="social-icon" aria-hidden="true"><i class="{{ \App\Models\SocialLink::platformIcon($socialLink->platform) }}"></i></span>
                                 {{ $socialLink->name }}
                             </a>
                         @endforeach
@@ -1243,23 +1279,29 @@
                 <div>
                     <h2 class="footer-heading">Temukan kami</h2>
                     <div class="footer-map">
-                        <div id="venue-map" role="application" aria-label="Peta interaktif {{ $venueSetting->address }}"></div>
+                        <div id="venue-map" role="application" aria-label="Peta interaktif semua venue Rally"></div>
                         <div class="map-caption">
-                            <span>{{ $venueSetting->address }}</span>
-                            <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($venueSetting->latitude . ',' . $venueSetting->longitude) }}" target="_blank" rel="noopener noreferrer">Buka Maps ↗</a>
+                            @if ($venues->isNotEmpty())
+                                <span>{{ $venues->count() }} venue aktif</span>
+                                <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($venues->first()->latitude . ',' . $venues->first()->longitude) }}" target="_blank" rel="noopener noreferrer">Venue pertama ↗</a>
+                            @else
+                                <span>Lokasi venue belum tersedia</span>
+                            @endif
                         </div>
                     </div>
                 </div>
             </div>
             <div class="footer-bottom">
-                <span>© {{ date('Y') }} Rally Padel. Semua hak dilindungi.</span>
+                <span>© {{ date('Y') }} {{ $primaryVenue?->name ?? 'Rally Padel' }}. Semua hak dilindungi.</span>
                 <span>Temukan lapangan. Mulai permainan.</span>
             </div>
         </div>
     </footer>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <dialog class="booking-dialog" id="booking-dialog" aria-labelledby="booking-title">
-        <form class="booking-dialog-content" id="booking-form">
+        <form class="booking-dialog-content" id="booking-form" action="{{ route('booking.store') }}" method="POST">
+            @csrf
+            <input id="booking-court-ulid" name="court_ulid" type="hidden" required>
             <div class="booking-dialog-header">
                 <div>
                     <p class="section-kicker">Booking lapangan</p>
@@ -1276,7 +1318,7 @@
             </div>
             <div class="booking-field booking-date-field">
                 <label for="booking-date">Tanggal main *</label>
-                <input id="booking-date" name="booking_date" type="date" required>
+                <input id="booking-date" name="booking_date" type="date" value="{{ old('booking_date') }}" required>
             </div>
             <div class="booking-time-heading">
                 <label for="booking-time-slots">Pilih jam mulai *</label>
@@ -1303,7 +1345,7 @@
                     <textarea id="booking-notes" name="notes" placeholder="Contoh: butuh sewa raket"></textarea>
                 </div>
             </div>
-            <p class="booking-note">Jadwal demo hanya disimpan di browser ini. Untuk mencegah bentrok antarperangkat, sistem perlu terhubung ke server.</p>
+            <p class="booking-note">Slot akan ditahan selama 30 menit. Setelah booking dibuat, lakukan pembayaran dan unggah bukti bayar sebelum batas waktu.</p>
             <div class="booking-dialog-actions">
                 <button class="dialog-cancel" type="button" data-close-dialog>Batal</button>
                 <button class="button booking-submit" type="submit">Lanjutkan booking <span aria-hidden="true">↗</span></button>
@@ -1333,10 +1375,10 @@
         const bookingAvailability = document.getElementById('booking-availability');
         const bookingSubmit = bookingForm.querySelector('[type="submit"]');
         const bookingSlotTimes = ['07:00', '09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00'];
-        const bookingVenueOrder = [...document.querySelectorAll('.book-button')].map((button) => button.dataset.venueUlid);
-        const bookingStorageKey = 'rally-booked-slots';
+        const bookingCourtInput = document.getElementById('booking-court-ulid');
         let selectedBookingVenue = null;
         let selectedBookingTime = '';
+        let availabilityRequest = 0;
         let activeType = 'all';
         let toastTimer;
 
@@ -1367,42 +1409,8 @@
         searchDate.value = localToday;
         bookingDateField.min = localToday;
 
-        function readBookedSlots() {
-            const stored = localStorage.getItem(bookingStorageKey);
-            if (!stored) return [];
-
-            try {
-                const parsed = JSON.parse(stored);
-                const valid = Array.isArray(parsed) && parsed.every((booking) => (
-                    booking
-                    && (typeof booking.venueId === 'string' || typeof booking.venueId === 'number')
-                    && /^\d{4}-\d{2}-\d{2}$/.test(booking.date)
-                    && bookingSlotTimes.includes(booking.time)
-                ));
-                if (!valid) throw new Error('Data jadwal tersimpan memiliki format yang tidak valid.');
-                return parsed;
-            } catch (error) {
-                console.error('Jadwal booking tersimpan tidak dapat dibaca.', error);
-                return null;
-            }
-        }
-
         function currentDateKey() {
             return bookingDateField.value;
-        }
-
-        function demoSlotIsAvailable(venueId, date, time, savedSlots) {
-            if (!savedSlots) return false;
-            const venueIndex = bookingVenueOrder.indexOf(String(venueId));
-            const slotIndex = bookingSlotTimes.indexOf(time);
-            const dayNumber = Number(date.slice(-2));
-            const availableByDemoSchedule = (dayNumber + venueIndex * 3 + slotIndex * 2) % 7 !== 0
-                && (dayNumber + venueIndex + slotIndex) % 11 !== 0;
-            const alreadyBooked = savedSlots.some((booking) => (
-                booking.venueId === venueId && booking.date === date && booking.time === time
-            ));
-
-            return availableByDemoSchedule && !alreadyBooked;
         }
 
         function updateBookingSummary() {
@@ -1414,7 +1422,8 @@
             document.getElementById('booking-schedule').textContent = `${dateLabel} · ${timeLabel}`;
         }
 
-        function renderBookingSlots() {
+        async function renderBookingSlots() {
+            const requestId = ++availabilityRequest;
             selectedBookingTime = '';
             bookingSlotInput.value = '';
             updateBookingSummary();
@@ -1427,16 +1436,24 @@
                 return;
             }
 
-            const savedSlots = readBookedSlots();
             bookingSlotGrid.replaceChildren();
             bookingAvailability.classList.remove('error');
-
-            if (!savedSlots) {
-                bookingAvailability.textContent = 'Jadwal tidak dapat dibaca. Muat ulang halaman sebelum melanjutkan.';
+            bookingAvailability.textContent = 'Memuat jadwal...';
+            bookingSubmit.disabled = true;
+            let bookedSlots;
+            try {
+                const query = new URLSearchParams({ from: currentDateKey(), to: currentDateKey() });
+                const response = await fetch(`{{ route('booking.availability') }}?${query}`, { headers: { Accept: 'application/json' } });
+                if (!response.ok) throw new Error('Jadwal tidak dapat dimuat.');
+                bookedSlots = (await response.json()).bookings;
+            } catch (error) {
+                console.error('Jadwal booking tidak dapat dimuat.', error);
+                if (requestId !== availabilityRequest) return;
+                bookingAvailability.textContent = 'Jadwal gagal dimuat. Periksa koneksi lalu coba lagi.';
                 bookingAvailability.classList.add('error');
-                bookingSubmit.disabled = true;
                 return;
             }
+            if (requestId !== availabilityRequest) return;
 
             const matchingSlots = bookingSlotTimes.filter((time) => {
                 const hour = Number(time.slice(0, 2));
@@ -1448,7 +1465,11 @@
             let availableCount = 0;
 
             matchingSlots.forEach((time) => {
-                const available = demoSlotIsAvailable(selectedBookingVenue, currentDateKey(), time, savedSlots);
+                const alreadyBooked = bookedSlots.some((slot) => (
+                    slot.court === selectedBookingVenue && slot.date === currentDateKey() && slot.time === time
+                ));
+                const isPastToday = currentDateKey() === localToday && new Date(`${currentDateKey()}T${time}:00`) <= new Date();
+                const available = !alreadyBooked && !isPastToday;
                 if (available) availableCount += 1;
                 const button = document.createElement('button');
                 button.type = 'button';
@@ -1457,22 +1478,8 @@
                 button.dataset.slot = time;
                 button.disabled = !available;
                 button.setAttribute('aria-label', `${time}, ${available ? 'tersedia' : 'tidak tersedia'}`);
-                if (!available) button.title = 'Slot ini tidak tersedia pada jadwal demo.';
+                if (!available) button.title = alreadyBooked ? 'Slot ini sudah dipesan.' : 'Waktu ini sudah lewat.';
                 button.addEventListener('click', () => {
-                    const latestSlots = readBookedSlots();
-                    if (!latestSlots) {
-                        bookingAvailability.textContent = 'Jadwal tidak dapat dibaca. Muat ulang halaman sebelum melanjutkan.';
-                        bookingAvailability.classList.add('error');
-                        bookingSubmit.disabled = true;
-                        return;
-                    }
-                    if (!demoSlotIsAvailable(selectedBookingVenue, currentDateKey(), time, latestSlots)) {
-                        renderBookingSlots();
-                        bookingAvailability.textContent = 'Slot baru saja dipesan. Pilih jam lain.';
-                        bookingAvailability.classList.add('error');
-                        return;
-                    }
-
                     selectedBookingTime = time;
                     bookingSlotInput.value = time;
                     bookingSlotGrid.querySelectorAll('.booking-time-slot').forEach((slotButton) => {
@@ -1497,12 +1504,13 @@
             if (bookingDialog.open) renderBookingSlots();
         });
 
-        function openBooking(button, preferredDate = searchDate.value, preferredSlot = '') {
+        async function openBooking(button, preferredDate = searchDate.value, preferredSlot = '') {
             selectedBookingVenue = button.dataset.venueUlid;
+            bookingCourtInput.value = selectedBookingVenue;
             document.getElementById('booking-venue').textContent = button.dataset.venue;
             bookingDateField.value = preferredDate && preferredDate >= localToday ? preferredDate : localToday;
-            renderBookingSlots();
             bookingDialog.showModal();
+            await renderBookingSlots();
             document.getElementById('customer-name').focus();
 
             if (preferredSlot) {
@@ -1515,10 +1523,6 @@
                 }
             }
         }
-
-        window.addEventListener('storage', (event) => {
-            if (event.key === bookingStorageKey && bookingDialog.open) renderBookingSlots();
-        });
 
         function updateVenues() {
             let visible = 0;
@@ -1571,7 +1575,7 @@
 
         document.querySelectorAll('.book-button').forEach((button) => {
             button.addEventListener('click', () => {
-                openBooking(button, searchDate.value, button.dataset.selectedSlot || '');
+                if (!button.disabled) openBooking(button, searchDate.value, button.dataset.selectedSlot || '');
             });
         });
 
@@ -1582,47 +1586,14 @@
             if (event.target === bookingDialog) bookingDialog.close();
         });
         bookingForm.addEventListener('submit', (event) => {
-            event.preventDefault();
             if (!currentDateKey() || !selectedBookingTime) {
+                event.preventDefault();
                 bookingAvailability.textContent = 'Pilih tanggal dan jam yang masih tersedia sebelum melanjutkan.';
                 bookingAvailability.classList.add('error');
                 return;
             }
-            if (!bookingForm.reportValidity()) return;
-
-            const savedSlots = readBookedSlots();
-            if (!savedSlots) {
-                bookingAvailability.textContent = 'Jadwal tidak dapat dibaca. Muat ulang halaman sebelum melanjutkan.';
-                bookingAvailability.classList.add('error');
-                bookingSubmit.disabled = true;
-                return;
-            }
-            if (!demoSlotIsAvailable(selectedBookingVenue, currentDateKey(), selectedBookingTime, savedSlots)) {
-                renderBookingSlots();
-                bookingAvailability.textContent = 'Slot baru saja dipesan. Pilih jam lain.';
-                bookingAvailability.classList.add('error');
-                return;
-            }
-
-            const customerName = document.getElementById('customer-name').value.trim();
-            const reservation = {
-                venueId: selectedBookingVenue,
-                date: currentDateKey(),
-                time: selectedBookingTime,
-            };
-            const confirmedSlots = [...savedSlots, reservation];
-            try {
-                localStorage.setItem(bookingStorageKey, JSON.stringify(confirmedSlots));
-            } catch (error) {
-                console.error('Booking demo tidak dapat disimpan ke browser.', error);
-                bookingAvailability.textContent = 'Booking belum tersimpan. Periksa penyimpanan browser lalu coba lagi.';
-                bookingAvailability.classList.add('error');
-                return;
-            }
-
-            bookingDialog.close();
-            bookingForm.reset();
-            showToast(`Terima kasih, ${customerName}. Slot ${reservation.time} berhasil dicatat di browser ini.`);
+            bookingSubmit.disabled = true;
+            bookingSubmit.textContent = 'Membuat booking...';
         });
 
         const scheduleParams = new URLSearchParams(window.location.search);
@@ -1733,15 +1704,23 @@
 
         const mapElement = document.getElementById('venue-map');
         if (window.L) {
-            const venueCoordinates = [{{ $venueSetting->latitude }}, {{ $venueSetting->longitude }}];
-            const venueMap = L.map(mapElement, { scrollWheelZoom: false }).setView(venueCoordinates, {{ $venueSetting->map_zoom }});
+            const venueLocations = @json($venueMapPoints);
+            const defaultCenter = [-6.2, 106.8167];
+            const venueMap = L.map(mapElement, { scrollWheelZoom: false }).setView(defaultCenter, 11);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             }).addTo(venueMap);
-            L.marker(venueCoordinates)
-                .addTo(venueMap)
-                .bindPopup(@json($venueSetting->name . ' · ' . $venueSetting->address));
+            const venueBounds = [];
+            venueLocations.forEach((venue) => {
+                const coordinates = [venue.latitude, venue.longitude];
+                venueBounds.push(coordinates);
+                const popup = document.createElement('div');
+                popup.textContent = `${venue.name} · ${venue.address}`;
+                L.marker(coordinates).addTo(venueMap).bindPopup(popup);
+            });
+            if (venueBounds.length === 1) venueMap.setView(venueBounds[0], 14);
+            if (venueBounds.length > 1) venueMap.fitBounds(venueBounds, { padding: [20, 20], maxZoom: 14 });
             window.setTimeout(() => venueMap.invalidateSize(), 100);
         } else {
             console.error('Leaflet gagal dimuat; peta lokasi tidak tersedia.');

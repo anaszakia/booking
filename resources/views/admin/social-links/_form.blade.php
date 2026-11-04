@@ -11,10 +11,21 @@
         @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
     </div>
     <div class="mb-4">
-        <label for="platform" class="form-label">Platform</label>
-        <input id="platform" name="platform" class="form-control @error('platform') is-invalid @enderror"
-            value="{{ old('platform', $socialLink?->platform) }}" maxlength="40" placeholder="Contoh: instagram">
+        <label for="platform" class="form-label">Platform & ikon <span class="text-danger">*</span></label>
+        <select id="platform" name="platform" class="form-select @error('platform') is-invalid @enderror" required>
+            <option value="">Pilih platform sosial media</option>
+            @foreach ($platforms as $value => $platform)
+                <option value="{{ $value }}" data-icon="{{ $platform['icon'] }}"
+                    @selected(old('platform', $socialLink?->platform) === $value)>
+                    {{ $platform['label'] }}
+                </option>
+            @endforeach
+        </select>
         @error('platform') <div class="invalid-feedback">{{ $message }}</div> @enderror
+        <div class="d-flex align-items-center gap-2 mt-2 text-muted small" id="platform-preview" aria-live="polite">
+            <i class="ti ti-world fs-5" id="platform-preview-icon" aria-hidden="true"></i>
+            <span id="platform-preview-label">Ikon platform akan tampil di footer publik</span>
+        </div>
     </div>
     <div class="mb-4">
         <label for="url" class="form-label">URL profil <span class="text-danger">*</span></label>
@@ -37,3 +48,22 @@
     <button type="submit" class="btn btn-primary">{{ $submitLabel }}</button>
     <a href="{{ route('social-links.index') }}" class="btn btn-white">Batal</a>
 </form>
+
+@push('scripts')
+    <script>
+        const platformSelect = document.getElementById('platform');
+        const platformPreviewIcon = document.getElementById('platform-preview-icon');
+        const platformPreviewLabel = document.getElementById('platform-preview-label');
+
+        function updatePlatformPreview() {
+            const selectedOption = platformSelect.selectedOptions[0];
+            platformPreviewIcon.className = `${selectedOption?.dataset.icon || 'ti ti-world'} fs-5`;
+            platformPreviewLabel.textContent = selectedOption?.value
+                ? `Ikon ${selectedOption.text.trim()}`
+                : 'Ikon platform akan tampil di footer publik';
+        }
+
+        platformSelect.addEventListener('change', updatePlatformPreview);
+        updatePlatformPreview();
+    </script>
+@endpush

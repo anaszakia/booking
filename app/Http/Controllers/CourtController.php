@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Court;
+use App\Models\Venue;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -12,6 +13,7 @@ class CourtController extends Controller
     public function index(Request $request): View
     {
         $courts = Court::query()
+            ->with('venue:id,name')
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search')->trim()->toString();
                 $query->where(function ($query) use ($search) {
@@ -29,7 +31,9 @@ class CourtController extends Controller
 
     public function create(): View
     {
-        return view('admin.courts.create');
+        $venues = Venue::active()->orderBy('name')->get();
+
+        return view('admin.courts.create', compact('venues'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -41,7 +45,10 @@ class CourtController extends Controller
 
     public function edit(Court $court): View
     {
-        return view('admin.courts.edit', compact('court'));
+        $venues = Venue::active()->orderBy('name')->get();
+        $court->load('venue');
+
+        return view('admin.courts.edit', compact('court', 'venues'));
     }
 
     public function update(Request $request, Court $court): RedirectResponse
@@ -53,6 +60,10 @@ class CourtController extends Controller
 
     public function destroy(Court $court): RedirectResponse
     {
+        if ($court->bookings()->exists()) {
+            return back()->with('error', 'Lapangan masih memiliki riwayat booking dan tidak dapat dihapus.');
+        }
+
         $court->delete();
 
         return redirect()->route('courts.index')->with('success', 'Lapangan berhasil dihapus.');
@@ -62,6 +73,7 @@ class CourtController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
+            'venue_ulid' => ['required', 'string', 'size:26', 'exists:venues,ulid'],
             'location' => ['required', 'string', 'max:120'],
             'address' => ['nullable', 'string', 'max:5000'],
             'court_type' => ['required', 'in:indoor,outdoor'],
@@ -71,6 +83,8 @@ class CourtController extends Controller
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
+        $data['venue_id'] = Venue::query()->where('ulid', $data['venue_ulid'])->firstOrFail()->id;
+        unset($data['venue_ulid']);
         $data['is_active'] = $request->boolean('is_active');
 
         return $data;

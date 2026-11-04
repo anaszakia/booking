@@ -23,6 +23,22 @@
             </div>
 
             <div class="mb-4">
+                <label for="venue_ulid" class="form-label">Venue <span class="text-danger">*</span></label>
+                <select id="venue_ulid" name="venue_ulid" class="form-select @error('venue_ulid') is-invalid @enderror" required>
+                    <option value="">Pilih venue</option>
+                    @foreach ($venues as $venue)
+                        <option value="{{ $venue->ulid }}" @selected(old('venue_ulid', $court?->venue?->ulid) === $venue->ulid)>
+                            {{ $venue->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('venue_ulid') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                @if ($venues->isEmpty())
+                    <div class="form-text text-danger">Buat dan aktifkan venue terlebih dahulu sebelum menambah lapangan.</div>
+                @endif
+            </div>
+
+            <div class="mb-4">
                 <label for="location" class="form-label">Area / lokasi <span class="text-danger">*</span></label>
                 <input id="location" name="location" type="text" maxlength="120"
                     class="form-control @error('location') is-invalid @enderror"

@@ -1,9 +1,11 @@
 <?php
+
 namespace App\Services;
 
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MinioService
 {
@@ -65,6 +67,34 @@ class MinioService
         return $folder . '/' . $filename;
     }
 
+    public function privateDiskName(): string
+    {
+        return $this->disk === 'public' ? 'local' : $this->disk;
+    }
+
+    public function uploadPrivate(UploadedFile $file, string $folder): string
+    {
+        $disk = Storage::disk($this->privateDiskName());
+        $filename = time().'_'.uniqid().'.'.$file->extension();
+        $path = $folder.'/'.$filename;
+
+        if (! $disk->putFileAs($folder, $file, $filename, 'private')) {
+            throw new \RuntimeException('Bukti pembayaran gagal disimpan.');
+        }
+
+        return $path;
+    }
+
+    public function downloadPrivate(string $path, ?string $disk = null): StreamedResponse
+    {
+        return Storage::disk($disk ?? $this->privateDiskName())->download($path);
+    }
+
+    public function previewPrivate(string $path, ?string $disk = null): StreamedResponse
+    {
+        return Storage::disk($disk ?? $this->privateDiskName())->response($path, basename($path), [], 'inline');
+    }
+
     /**
      * Upload dengan nama custom
      */
@@ -107,12 +137,12 @@ class MinioService
         }
 
         $url = Storage::disk($this->disk)->url($path);
-        
+
         // Fix localhost untuk browser access jika running di development
         if (str_contains($url, '127.0.0.1')) {
             $url = str_replace('127.0.0.1', 'localhost', $url);
         }
-        
+
         return $url;
     }
 
@@ -160,6 +190,7 @@ class MinioService
         if ($oldPath && $this->exists($oldPath)) {
             $this->delete($oldPath);
         }
+
         return $this->upload($newFile, $folder);
     }
 

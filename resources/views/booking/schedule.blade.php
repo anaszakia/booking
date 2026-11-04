@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0b110e">
-    <title>Lihat Jadwal — Rally Padel</title>
+    <title>Lihat Jadwal — {{ $primaryVenue?->name ?? 'Rally Padel' }}</title>
     <script>
         (() => {
             const savedTheme = localStorage.getItem('rally-theme');
@@ -63,6 +63,7 @@
             backdrop-filter: blur(18px);
         }
         .brand { display: inline-flex; align-items: center; gap: 9px; font: 800 23px "Manrope", sans-serif; letter-spacing: -1.6px; }
+        .brand-logo { width: 30px; height: 30px; flex: 0 0 auto; border-radius: 9px; object-fit: cover; }
         .brand-mark {
             width: 30px;
             height: 30px;
@@ -74,8 +75,8 @@
         }
         .brand-mark svg { width: 18px; }
         .header-actions { display: flex; align-items: center; gap: 17px; }
-        .home-link, .admin-link { color: var(--muted); font-size: 11px; font-weight: 700; transition: color .2s; }
-        .home-link:hover, .admin-link:hover { color: var(--accent); }
+        .home-link, .payment-link, .admin-link { color: var(--muted); font-size: 11px; font-weight: 700; transition: color .2s; }
+        .home-link:hover, .payment-link:hover, .admin-link:hover { color: var(--accent); }
         .admin-link { display: inline-flex; align-items: center; gap: 7px; color: var(--text); }
         .admin-link svg { width: 15px; color: var(--accent); }
         .theme-toggle {
@@ -110,6 +111,8 @@
         [data-theme="light"] .theme-toggle .sun-icon { display: block; }
         [data-theme="light"] .theme-toggle .moon-icon { display: none; }
         .page-heading { display: flex; justify-content: space-between; align-items: end; gap: 24px; padding: 62px 0 26px; }
+        .page-heading-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+        .payment-action { display: inline-flex; align-items: center; justify-content: center; padding: 10px 13px; border-radius: 9px; background: var(--accent); color: var(--accent-ink); font-size: 10px; font-weight: 700; }
         .eyebrow { margin-bottom: 12px; color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: 1.65px; text-transform: uppercase; }
         h1, h2, h3, p { margin-top: 0; }
         h1 { margin-bottom: 10px; font: 800 clamp(34px, 5vw, 52px)/1.08 "Manrope", sans-serif; letter-spacing: -2.7px; }
@@ -126,7 +129,7 @@
             font-size: 10px;
             white-space: nowrap;
         }
-        .demo-label::before { width: 7px; height: 7px; border-radius: 50%; background: #e7af52; content: ""; }
+        .demo-label::before { width: 7px; height: 7px; border-radius: 50%; background: #83c779; content: ""; }
         .calendar-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(280px, .75fr); gap: 18px; align-items: start; padding-bottom: 62px; }
         .panel {
             overflow: hidden;
@@ -281,6 +284,8 @@
         @media (max-width: 430px) {
             .header-actions { gap: 8px; }
             .home-link { display: none; }
+            .payment-link { display: none; }
+            .page-heading-actions { align-items: flex-start; }
             .calendar-toolbar { gap: 7px; }
             .month-title { font-size: 17px; }
             .calendar-actions { gap: 5px; }
@@ -303,12 +308,17 @@
 </head>
 <body>
     <header class="site-header">
-        <a class="brand" href="{{ route('home') }}" aria-label="Rally, beranda">
-            <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 19 18.5 5M8 5l11 11M5 8l11 11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
-            rally<span style="color:var(--accent)">.</span>
+        <a class="brand" href="{{ route('home') }}" aria-label="{{ $primaryVenue?->name ?? 'Rally Padel' }}, beranda">
+            @if ($primaryVenue?->logo_path)
+                <img class="brand-logo" src="{{ minio_url($primaryVenue->logo_path) }}" alt="">
+            @else
+                <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 19 18.5 5M8 5l11 11M5 8l11 11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+            @endif
+            {{ $primaryVenue?->name ?? 'Rally' }}<span style="color:var(--accent)">.</span>
         </a>
         <div class="header-actions">
             <a class="home-link" href="{{ route('home') }}">← Beranda</a>
+            <a class="payment-link" href="{{ route('booking.upload-form') }}">Upload bukti bayar</a>
             <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Aktifkan mode terang" title="Aktifkan mode terang">
                 <svg class="sun-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
                 <svg class="moon-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.5 8.5 0 1 0 20.2 15Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -327,7 +337,10 @@
                 <h1>Rencanakan game<br>berikutnya.</h1>
                 <p>Lihat ketersediaan lapangan dari kalender, lalu pilih slot yang cocok untuk timmu.</p>
             </div>
-            <span class="demo-label">Jadwal tersedia · contoh ketersediaan</span>
+            <div class="page-heading-actions">
+                <span class="demo-label">Jadwal real-time · booking server</span>
+                <a class="payment-action" href="{{ route('booking.upload-form') }}">Upload bukti bayar</a>
+            </div>
         </section>
 
         <section class="calendar-layout" aria-label="Kalender jadwal padel">
@@ -356,7 +369,7 @@
                     <span class="weekday">Sen</span><span class="weekday">Sel</span><span class="weekday">Rab</span><span class="weekday">Kam</span><span class="weekday">Jum</span><span class="weekday">Sab</span><span class="weekday">Min</span>
                 </div>
                 <div class="days-grid" id="days-grid" role="grid" aria-label="Hari dalam kalender"></div>
-                <p class="calendar-footnote">Data lapangan, lokasi, dan harga berasal dari master. Status slot masih contoh dan belum terhubung ke booking server.</p>
+                <p class="calendar-footnote">Status jadwal mengikuti booking dan pembayaran yang tercatat di server. Slot tanpa bukti pembayaran dilepas setelah 30 menit.</p>
             </div>
 
             <aside class="panel schedule-panel" aria-labelledby="selected-day-heading">
@@ -380,7 +393,7 @@
 
     <footer>
         <div class="shell footer-row">
-            <span>© {{ date('Y') }} Rally Padel · Jadwal contoh untuk pratinjau.</span>
+            <span>© {{ date('Y') }} {{ $primaryVenue?->name ?? 'Rally Padel' }} · Booking online.</span>
             <a href="{{ route('home') }}">Kembali ke beranda ↗</a>
         </div>
     </footer>
@@ -389,7 +402,6 @@
         const themeToggle = document.getElementById('theme-toggle');
         const venues = @json($scheduleCourts);
         const hourSlots = ['07:00', '09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00'];
-        const bookingStorageKey = 'rally-booked-slots';
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         let visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -401,27 +413,10 @@
         const venueFilter = document.getElementById('venue-filter');
         const selectedDateLabel = document.getElementById('selected-date-label');
         const slotTotal = document.getElementById('slot-total');
-        let savedBookings = readSavedBookings();
-
-        function readSavedBookings() {
-            const stored = localStorage.getItem(bookingStorageKey);
-            if (!stored) return [];
-
-            try {
-                const parsed = JSON.parse(stored);
-                const valid = Array.isArray(parsed) && parsed.every((booking) => (
-                    booking
-                    && (typeof booking.venueId === 'string' || typeof booking.venueId === 'number')
-                    && /^\d{4}-\d{2}-\d{2}$/.test(booking.date)
-                    && hourSlots.includes(booking.time)
-                ));
-                if (!valid) throw new Error('Data jadwal tersimpan memiliki format yang tidak valid.');
-                return parsed;
-            } catch (error) {
-                console.error('Jadwal booking tersimpan tidak dapat dibaca.', error);
-                return null;
-            }
-        }
+        let savedBookings = [];
+        let availabilityLoaded = false;
+        let availabilityError = false;
+        let availabilityRequest = 0;
 
         venues.forEach((venue) => {
             const option = document.createElement('option');
@@ -443,21 +438,20 @@
 
         function makeSlots(date) {
             if (date < today) return [];
-            const dayNumber = date.getDate();
             const dateString = dateKey(date);
             return venues
                 .filter((venue) => selectedVenue === 'all' || selectedVenue === venue.ulid)
-                .flatMap((venue) => hourSlots.map((time, slotIndex) => ({
+                .flatMap((venue) => hourSlots.map((time) => ({
                     venue,
                     time,
-                    available: Boolean(savedBookings)
-                        && (dayNumber + venues.indexOf(venue) * 3 + slotIndex * 2) % 7 !== 0
-                        && (dayNumber + venues.indexOf(venue) + slotIndex) % 11 !== 0
+                    available: availabilityLoaded
+                        && venue.paymentReady
                         && !savedBookings.some((booking) => (
-                            String(booking.venueId) === venue.ulid
+                            booking.court === venue.ulid
                             && booking.date === dateString
                             && booking.time === time
-                        )),
+                        ))
+                        && !(dateString === dateKey(today) && new Date(`${dateString}T${time}:00`) <= new Date()),
                 })))
                 .sort((a, b) => a.time.localeCompare(b.time) || a.venue.name.localeCompare(b.venue.name));
         }
@@ -469,8 +463,12 @@
             selectedDateLabel.textContent = new Intl.DateTimeFormat('id-ID', { dateStyle: 'full' }).format(date);
             slotTotal.textContent = `${availableCount} slot tersedia`;
 
-            if (!savedBookings) {
+            if (availabilityError) {
                 slotList.innerHTML = '<div class="empty-slots">Data jadwal tidak dapat dibaca. Muat ulang halaman sebelum memilih slot.</div>';
+                return;
+            }
+            if (!availabilityLoaded) {
+                slotList.innerHTML = '<div class="empty-slots">Memuat ketersediaan jadwal...</div>';
                 return;
             }
 
@@ -485,7 +483,7 @@
             }
 
             slotList.innerHTML = slots.map((slot, index) => {
-                const status = slot.available ? 'Tersedia' : 'Penuh';
+                const status = !slot.venue.paymentReady ? 'Pembayaran belum siap' : slot.available ? 'Tersedia' : 'Penuh';
                 const bookUrl = new URLSearchParams({
                     court: slot.venue.ulid,
                     venue: slot.venue.name,
@@ -531,8 +529,12 @@
                 const isPast = date < today;
                 const isSelected = key === selectedKey;
                 const isToday = key === todayKey;
-                const venueCount = selectedVenue === 'all' ? venues.length : 1;
-                const totalSlots = isPast ? 0 : venueCount * hourSlots.length;
+                const visibleCourts = venues.filter((venue) => venue.paymentReady && (selectedVenue === 'all' || selectedVenue === venue.ulid));
+                const venueCount = visibleCourts.length;
+                const remainingTimes = key === todayKey
+                    ? hourSlots.filter((time) => new Date(`${key}T${time}:00`) > new Date()).length
+                    : hourSlots.length;
+                const totalSlots = isPast ? 0 : venueCount * remainingTimes;
                 const availability = isPast ? 0 : makeSlots(date).filter((slot) => slot.available).length;
                 const booked = totalSlots - availability;
                 const classes = ['day-cell'];
@@ -557,6 +559,7 @@
                     selectedDate = new Date(cellYear, cellMonth - 1, cellDay);
                     renderCalendar();
                     renderSlots();
+                    loadAvailability();
                 });
             });
         }
@@ -564,6 +567,7 @@
         function changeMonth(amount) {
             visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + amount, 1);
             renderCalendar();
+            loadAvailability();
         }
 
         document.getElementById('previous-month').addEventListener('click', () => changeMonth(-1));
@@ -573,19 +577,42 @@
             selectedDate = new Date(today);
             renderCalendar();
             renderSlots();
+            loadAvailability();
         });
         venueFilter.addEventListener('change', () => {
             selectedVenue = venueFilter.value;
             renderCalendar();
             renderSlots();
         });
-        window.addEventListener('storage', (event) => {
-            if (event.key === bookingStorageKey) {
-                savedBookings = readSavedBookings();
+        async function loadAvailability() {
+            const requestId = ++availabilityRequest;
+            const firstDay = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1);
+            const gridStart = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1 - ((firstDay.getDay() + 6) % 7));
+            const gridEnd = new Date(gridStart);
+            gridEnd.setDate(gridEnd.getDate() + 41);
+            const query = new URLSearchParams({ from: dateKey(gridStart), to: dateKey(gridEnd) });
+            availabilityLoaded = false;
+            availabilityError = false;
+            renderCalendar();
+            renderSlots();
+            try {
+                const response = await fetch(`{{ route('booking.availability') }}?${query}`, { headers: { Accept: 'application/json' } });
+                if (!response.ok) throw new Error('Jadwal tidak dapat dimuat.');
+                const result = await response.json();
+                if (requestId !== availabilityRequest) return;
+                savedBookings = result.bookings;
+                availabilityLoaded = true;
+                renderCalendar();
+                renderSlots();
+            } catch (error) {
+                console.error('Ketersediaan jadwal gagal dimuat.', error);
+                if (requestId !== availabilityRequest) return;
+                availabilityError = true;
+                availabilityLoaded = true;
                 renderCalendar();
                 renderSlots();
             }
-        });
+        }
 
         function setTheme(theme, save = false) {
             document.documentElement.dataset.theme = theme;
@@ -607,6 +634,7 @@
 
         renderCalendar();
         renderSlots();
+        loadAvailability();
     </script>
 </body>
 </html>

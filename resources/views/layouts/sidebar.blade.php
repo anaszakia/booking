@@ -1,7 +1,6 @@
 @php
     $userId = session('user_id');
     $user   = $userId ? \App\Models\User::with('roles.menus.children')->find($userId) : null;
-    $venueSetting = \App\Models\VenueSetting::query()->first();
 
     $assignedMenuIds = $user?->roles
         ->flatMap(fn($role) => $role->menus)
@@ -112,14 +111,18 @@
                     <span class="text">Master Lapangan</span>
                 </a>
             </li>
-            @if ($venueSetting)
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('venue-settings.edit', $venueSetting) }}">
-                        <span class="nav-icon"><i class="ti ti-map-pin"></i></span>
-                        <span class="text">Lokasi & Peta</span>
-                    </a>
-                </li>
-            @endif
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('bookings.index') }}">
+                    <span class="nav-icon"><i class="ti ti-receipt"></i></span>
+                    <span class="text">Booking & Pembayaran</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('venues.index') }}">
+                    <span class="nav-icon"><i class="ti ti-map-pin"></i></span>
+                    <span class="text">Master Venue</span>
+                </a>
+            </li>
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('social-links.index') }}">
                     <span class="nav-icon"><i class="ti ti-brand-instagram"></i></span>
@@ -248,14 +251,12 @@
                         <span class="text">Master Lapangan</span>
                     </a>
                 </li>
-                @if ($venueSetting)
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('venue-settings.edit', $venueSetting) }}">
-                            <span class="nav-icon"><i class="ti ti-map-pin"></i></span>
-                            <span class="text">Lokasi & Peta</span>
-                        </a>
-                    </li>
-                @endif
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('venues.index') }}">
+                        <span class="nav-icon"><i class="ti ti-map-pin"></i></span>
+                        <span class="text">Master Venue</span>
+                    </a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('social-links.index') }}">
                         <span class="nav-icon"><i class="ti ti-brand-instagram"></i></span>

@@ -31,7 +31,12 @@
                         @forelse ($socialLinks as $socialLink)
                             <tr>
                                 <td>{{ $socialLink->name }}</td>
-                                <td>{{ $socialLink->platform ?: '-' }}</td>
+                                <td>
+                                    <span class="d-inline-flex align-items-center gap-2">
+                                        <i class="{{ \App\Models\SocialLink::platformIcon($socialLink->platform) }} fs-5" aria-hidden="true"></i>
+                                        {{ \App\Models\SocialLink::PLATFORMS[$socialLink->platform]['label'] ?? $socialLink->platform }}
+                                    </span>
+                                </td>
                                 <td><a href="{{ $socialLink->url }}" target="_blank" rel="noopener noreferrer">{{ $socialLink->url }}</a></td>
                                 <td>{{ $socialLink->sort_order }}</td>
                                 <td>

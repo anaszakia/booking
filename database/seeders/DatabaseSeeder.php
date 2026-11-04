@@ -12,8 +12,8 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             PermissionSeeder::class,
             MenuSeeder::class,
+            VenueSeeder::class,
             CourtSeeder::class,
-            VenueSettingSeeder::class,
             SocialLinkSeeder::class,
         ]);
     }

@@ -3,15 +3,18 @@
 namespace Database\Seeders;
 
 use App\Models\Court;
+use App\Models\Venue;
 use Illuminate\Database\Seeder;
 
 class CourtSeeder extends Seeder
 {
     public function run(): void
     {
+        $venueId = Venue::active()->orderBy('name')->value('id');
         $courts = [
             [
                 'name' => 'Padel Social Club',
+                'venue_id' => $venueId,
                 'location' => 'Kemang, Jakarta Selatan',
                 'address' => 'Kemang, Jakarta Selatan, DKI Jakarta',
                 'court_type' => 'indoor',
@@ -22,6 +25,7 @@ class CourtSeeder extends Seeder
             ],
             [
                 'name' => 'Padel Haus',
+                'venue_id' => $venueId,
                 'location' => 'Puri Indah, Jakarta Barat',
                 'address' => 'Puri Indah, Jakarta Barat, DKI Jakarta',
                 'court_type' => 'outdoor',
@@ -32,6 +36,7 @@ class CourtSeeder extends Seeder
             ],
             [
                 'name' => 'The Court Society',
+                'venue_id' => $venueId,
                 'location' => 'Pluit, Jakarta Utara',
                 'address' => 'Pluit, Jakarta Utara, DKI Jakarta',
                 'court_type' => 'indoor',

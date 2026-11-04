@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SocialLink;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class SocialLinkController extends Controller
@@ -18,7 +19,7 @@ class SocialLinkController extends Controller
 
     public function create(): View
     {
-        return view('admin.social-links.create');
+        return view('admin.social-links.create', ['platforms' => SocialLink::PLATFORMS]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -30,7 +31,10 @@ class SocialLinkController extends Controller
 
     public function edit(SocialLink $socialLink): View
     {
-        return view('admin.social-links.edit', compact('socialLink'));
+        return view('admin.social-links.edit', [
+            'socialLink' => $socialLink,
+            'platforms' => SocialLink::PLATFORMS,
+        ]);
     }
 
     public function update(Request $request, SocialLink $socialLink): RedirectResponse
@@ -51,7 +55,7 @@ class SocialLinkController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:80'],
-            'platform' => ['nullable', 'string', 'max:40'],
+            'platform' => ['required', 'string', Rule::in(array_keys(SocialLink::PLATFORMS))],
             'url' => ['required', 'url:http,https', 'max:2048'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['sometimes', 'boolean'],
