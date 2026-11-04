@@ -327,7 +327,7 @@
                 <h1>Rencanakan game<br>berikutnya.</h1>
                 <p>Lihat ketersediaan lapangan dari kalender, lalu pilih slot yang cocok untuk timmu.</p>
             </div>
-            <span class="demo-label">Jadwal contoh · belum real-time</span>
+            <span class="demo-label">Jadwal tersedia · contoh ketersediaan</span>
         </section>
 
         <section class="calendar-layout" aria-label="Kalender jadwal padel">
@@ -356,7 +356,7 @@
                     <span class="weekday">Sen</span><span class="weekday">Sel</span><span class="weekday">Rab</span><span class="weekday">Kam</span><span class="weekday">Jum</span><span class="weekday">Sab</span><span class="weekday">Min</span>
                 </div>
                 <div class="days-grid" id="days-grid" role="grid" aria-label="Hari dalam kalender"></div>
-                <p class="calendar-footnote">Pilih tanggal untuk melihat seluruh slot. Data ketersediaan saat ini hanya contoh dan belum terhubung ke sistem booking.</p>
+                <p class="calendar-footnote">Data lapangan, lokasi, dan harga berasal dari master. Status slot masih contoh dan belum terhubung ke booking server.</p>
             </div>
 
             <aside class="panel schedule-panel" aria-labelledby="selected-day-heading">
@@ -372,7 +372,7 @@
         </section>
 
         <section class="summary-row" aria-label="Ringkasan lapangan">
-            <div class="summary-card"><span class="summary-value">3</span><span class="summary-label">Venue pilihan</span></div>
+            <div class="summary-card"><span class="summary-value">{{ $courts->count() }}</span><span class="summary-label">Lapangan aktif</span></div>
             <div class="summary-card"><span class="summary-value">06.00–22.00</span><span class="summary-label">Jam operasional contoh</span></div>
             <div class="summary-card"><span class="summary-value">7 hari</span><span class="summary-label">Kalender dapat dijelajahi</span></div>
         </section>
@@ -387,11 +387,7 @@
 
     <script>
         const themeToggle = document.getElementById('theme-toggle');
-        const venues = [
-            { id: 'social-club', name: 'Padel Social Club', location: 'jakarta-selatan', area: 'Kemang, Jakarta Selatan', price: 250000 },
-            { id: 'padel-haus', name: 'Padel Haus', location: 'jakarta-barat', area: 'Puri Indah, Jakarta Barat', price: 200000 },
-            { id: 'court-society', name: 'The Court Society', location: 'jakarta-utara', area: 'Pluit, Jakarta Utara', price: 275000 },
-        ];
+        const venues = @json($scheduleCourts);
         const hourSlots = ['07:00', '09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00'];
         const bookingStorageKey = 'rally-booked-slots';
         const now = new Date();
@@ -415,7 +411,7 @@
                 const parsed = JSON.parse(stored);
                 const valid = Array.isArray(parsed) && parsed.every((booking) => (
                     booking
-                    && venues.some((venue) => venue.id === booking.venueId)
+                    && (typeof booking.venueId === 'string' || typeof booking.venueId === 'number')
                     && /^\d{4}-\d{2}-\d{2}$/.test(booking.date)
                     && hourSlots.includes(booking.time)
                 ));
@@ -450,15 +446,15 @@
             const dayNumber = date.getDate();
             const dateString = dateKey(date);
             return venues
-                .filter((venue) => selectedVenue === 'all' || selectedVenue === venue.id)
-                .flatMap((venue, venueIndex) => hourSlots.map((time, slotIndex) => ({
+                .filter((venue) => selectedVenue === 'all' || selectedVenue === String(venue.id))
+                .flatMap((venue) => hourSlots.map((time, slotIndex) => ({
                     venue,
                     time,
                     available: Boolean(savedBookings)
-                        && (dayNumber + venueIndex * 3 + slotIndex * 2) % 7 !== 0
-                        && (dayNumber + venueIndex + slotIndex) % 11 !== 0
+                        && (dayNumber + venues.indexOf(venue) * 3 + slotIndex * 2) % 7 !== 0
+                        && (dayNumber + venues.indexOf(venue) + slotIndex) % 11 !== 0
                         && !savedBookings.some((booking) => (
-                            booking.venueId === venue.id
+                            String(booking.venueId) === String(venue.id)
                             && booking.date === dateString
                             && booking.time === time
                         )),
@@ -478,6 +474,11 @@
                 return;
             }
 
+            if (!venues.length) {
+                slotList.innerHTML = '<div class="empty-slots">Belum ada lapangan aktif di master lapangan.</div>';
+                return;
+            }
+
             if (!slots.length) {
                 slotList.innerHTML = '<div class="empty-slots">Jadwal untuk tanggal yang sudah lewat tidak ditampilkan. Pilih tanggal hari ini atau berikutnya.</div>';
                 return;
@@ -486,6 +487,7 @@
             slotList.innerHTML = slots.map((slot, index) => {
                 const status = slot.available ? 'Tersedia' : 'Penuh';
                 const bookUrl = new URLSearchParams({
+                    court: slot.venue.id,
                     venue: slot.venue.name,
                     date: dateKey(date),
                     slot: slot.time,

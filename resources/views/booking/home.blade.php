@@ -1099,10 +1099,10 @@
                 </div>
             </div>
             <aside class="hero-side-card" aria-label="Contoh ketersediaan lapangan">
-                <div class="hero-side-top"><span class="live-pill">Live courts</span><span class="side-number">01 — 03</span></div>
+                <div class="hero-side-top"><span class="live-pill">Lapangan aktif</span><span class="side-number">{{ str_pad((string) $courts->count(), 2, '0', STR_PAD_LEFT) }}</span></div>
                 <strong>Game on tonight.</strong>
                 <p>Temukan slot dan ajak timmu main.</p>
-                <div class="side-slot"><span>Slot tersedia hari ini</span><span>12+</span></div>
+                <div class="side-slot"><span>Jadwal contoh hari ini</span><span>↗</span></div>
             </aside>
             <div class="hero-note">
                 <div class="avatar-stack" aria-hidden="true">
@@ -1121,9 +1121,9 @@
                     <label for="location">Lokasi</label>
                     <select id="location" name="location">
                         <option value="all">Semua lokasi</option>
-                        <option value="jakarta-selatan">Jakarta Selatan</option>
-                        <option value="jakarta-barat">Jakarta Barat</option>
-                        <option value="jakarta-utara">Jakarta Utara</option>
+                        @foreach ($courts->pluck('location')->unique()->sort() as $courtLocation)
+                            <option value="{{ \Illuminate\Support\Str::slug($courtLocation) }}">{{ $courtLocation }}</option>
+                        @endforeach
                     </select>
                 </div>
             </div>
@@ -1167,45 +1167,26 @@
                 <button class="filter-chip" type="button" data-filter="outdoor">Outdoor</button>
             </div>
             <div class="venue-grid" id="venue-grid">
-                <article class="venue-card" data-type="indoor" data-location="jakarta-selatan" data-time="pagi malam">
-                    <div class="venue-image">
-                        <img src="https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=900&q=80" alt="Lapangan olahraga dengan permukaan hijau">
-                        <span class="badge">Indoor</span>
-                        <button class="favorite" type="button" aria-label="Simpan Padel Social Club ke favorit"><svg viewBox="0 0 24 24" fill="none"><path d="M20.8 8.8c0 4.2-8.8 10-8.8 10s-8.8-5.8-8.8-10a4.7 4.7 0 0 1 8.8-2.3 4.7 4.7 0 0 1 8.8 2.3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>
-                    </div>
-                    <div class="venue-details">
-                        <div class="venue-title-row"><h3>Padel Social Club</h3><span class="rating"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.5 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9L12 2.5Z"/></svg>4.9</span></div>
-                        <div class="location"><svg viewBox="0 0 24 24" fill="none"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg> Kemang, Jakarta Selatan</div>
-                        <div class="venue-divider"></div>
-                        <div class="venue-bottom"><span class="price">Mulai <strong>Rp250rb</strong> <span>/ jam</span></span><button class="button small-button book-button" type="button" data-venue="Padel Social Club" data-venue-id="social-club">Pilih jadwal</button></div>
-                    </div>
-                </article>
-                <article class="venue-card" data-type="outdoor" data-location="jakarta-barat" data-time="pagi siang">
-                    <div class="venue-image">
-                        <img src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=900&q=80" alt="Lapangan padel terbuka dengan langit cerah">
-                        <span class="badge">Outdoor</span>
-                        <button class="favorite" type="button" aria-label="Simpan Padel Haus ke favorit"><svg viewBox="0 0 24 24" fill="none"><path d="M20.8 8.8c0 4.2-8.8 10-8.8 10s-8.8-5.8-8.8-10a4.7 4.7 0 0 1 8.8-2.3 4.7 4.7 0 0 1 8.8 2.3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>
-                    </div>
-                    <div class="venue-details">
-                        <div class="venue-title-row"><h3>Padel Haus</h3><span class="rating"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.5 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9L12 2.5Z"/></svg>4.8</span></div>
-                        <div class="location"><svg viewBox="0 0 24 24" fill="none"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg> Puri Indah, Jakarta Barat</div>
-                        <div class="venue-divider"></div>
-                        <div class="venue-bottom"><span class="price">Mulai <strong>Rp200rb</strong> <span>/ jam</span></span><button class="button small-button book-button" type="button" data-venue="Padel Haus" data-venue-id="padel-haus">Pilih jadwal</button></div>
-                    </div>
-                </article>
-                <article class="venue-card" data-type="indoor" data-location="jakarta-utara" data-time="siang malam">
-                    <div class="venue-image">
-                        <img src="https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=900&q=80" alt="Lapangan tenis indoor yang terang">
-                        <span class="badge">Indoor</span>
-                        <button class="favorite" type="button" aria-label="Simpan The Court Society ke favorit"><svg viewBox="0 0 24 24" fill="none"><path d="M20.8 8.8c0 4.2-8.8 10-8.8 10s-8.8-5.8-8.8-10a4.7 4.7 0 0 1 8.8-2.3 4.7 4.7 0 0 1 8.8 2.3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>
-                    </div>
-                    <div class="venue-details">
-                        <div class="venue-title-row"><h3>The Court Society</h3><span class="rating"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.5 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9L12 2.5Z"/></svg>4.9</span></div>
-                        <div class="location"><svg viewBox="0 0 24 24" fill="none"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg> Pluit, Jakarta Utara</div>
-                        <div class="venue-divider"></div>
-                        <div class="venue-bottom"><span class="price">Mulai <strong>Rp275rb</strong> <span>/ jam</span></span><button class="button small-button book-button" type="button" data-venue="The Court Society" data-venue-id="court-society">Pilih jadwal</button></div>
-                    </div>
-                </article>
+                @forelse ($courts as $court)
+                    <article class="venue-card" data-type="{{ $court->court_type }}" data-location="{{ \Illuminate\Support\Str::slug($court->location) }}" data-time="pagi siang malam">
+                        <div class="venue-image">
+                            <img src="{{ $court->image_url ?: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=900&q=80' }}" alt="Lapangan padel {{ $court->name }}">
+                            <span class="badge">{{ ucfirst($court->court_type) }}</span>
+                            <button class="favorite" type="button" aria-label="Simpan {{ $court->name }} ke favorit"><svg viewBox="0 0 24 24" fill="none"><path d="M20.8 8.8c0 4.2-8.8 10-8.8 10s-8.8-5.8-8.8-10a4.7 4.7 0 0 1 8.8-2.3 4.7 4.7 0 0 1 8.8 2.3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>
+                        </div>
+                        <div class="venue-details">
+                            <div class="venue-title-row"><h3>{{ $court->name }}</h3></div>
+                            <div class="location"><svg viewBox="0 0 24 24" fill="none"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg> {{ $court->location }}</div>
+                            <div class="venue-divider"></div>
+                            <div class="venue-bottom">
+                                <span class="price"><strong>Rp{{ number_format($court->price_per_hour, 0, ',', '.') }}</strong> <span>/ jam</span></span>
+                                <button class="button small-button book-button" type="button" data-venue="{{ $court->name }}" data-venue-id="{{ $court->id }}">Pilih jadwal</button>
+                            </div>
+                        </div>
+                    </article>
+                @empty
+                    <p class="empty-results" style="display:block">Belum ada lapangan aktif. Silakan kembali lagi nanti.</p>
+                @endforelse
             </div>
             <p class="empty-results" id="empty-results">Belum ada lapangan untuk pilihan tersebut. Coba ubah lokasi atau waktu mainmu.</p>
         </section>
@@ -1351,7 +1332,7 @@
         const bookingAvailability = document.getElementById('booking-availability');
         const bookingSubmit = bookingForm.querySelector('[type="submit"]');
         const bookingSlotTimes = ['07:00', '09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00'];
-        const bookingVenueOrder = ['social-club', 'padel-haus', 'court-society'];
+        const bookingVenueOrder = [...document.querySelectorAll('.book-button')].map((button) => button.dataset.venueId);
         const bookingStorageKey = 'rally-booked-slots';
         let selectedBookingVenue = null;
         let selectedBookingTime = '';
@@ -1393,7 +1374,7 @@
                 const parsed = JSON.parse(stored);
                 const valid = Array.isArray(parsed) && parsed.every((booking) => (
                     booking
-                    && bookingVenueOrder.includes(booking.venueId)
+                    && (typeof booking.venueId === 'string' || typeof booking.venueId === 'number')
                     && /^\d{4}-\d{2}-\d{2}$/.test(booking.date)
                     && bookingSlotTimes.includes(booking.time)
                 ));
@@ -1411,7 +1392,7 @@
 
         function demoSlotIsAvailable(venueId, date, time, savedSlots) {
             if (!savedSlots) return false;
-            const venueIndex = bookingVenueOrder.indexOf(venueId);
+            const venueIndex = bookingVenueOrder.indexOf(String(venueId));
             const slotIndex = bookingSlotTimes.indexOf(time);
             const dayNumber = Number(date.slice(-2));
             const availableByDemoSchedule = (dayNumber + venueIndex * 3 + slotIndex * 2) % 7 !== 0
@@ -1645,12 +1626,15 @@
 
         const scheduleParams = new URLSearchParams(window.location.search);
         const scheduledVenue = scheduleParams.get('venue');
+        const scheduledCourt = scheduleParams.get('court');
         const scheduledDate = scheduleParams.get('date');
         const scheduledSlot = scheduleParams.get('slot');
         const scheduledLocation = scheduleParams.get('location');
         const datePattern = /^\d{4}-\d{2}-\d{2}$/;
         const targetBookButton = [...document.querySelectorAll('.book-button')]
-            .find((button) => button.dataset.venue === scheduledVenue);
+            .find((button) => scheduledCourt
+                ? button.dataset.venueId === scheduledCourt
+                : button.dataset.venue === scheduledVenue);
 
         if (
             targetBookButton

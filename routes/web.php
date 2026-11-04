@@ -5,6 +5,8 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\CourtController;
+use App\Models\Court;
 use Laravel\Passkeys\Http\Controllers\PasskeyConfirmationController;
 use Laravel\Passkeys\Http\Controllers\PasskeyLoginController;
 use Laravel\Passkeys\Http\Controllers\PasskeyRegistrationController;
@@ -45,8 +47,21 @@ Route::middleware(['auth:web', 'auth.custom'])->group(function () {
         ->name('passkey.destroy');
 });
 
-Route::get('/', fn() => view('booking.home'))->name('home');
-Route::get('/jadwal', fn() => view('booking.schedule'))->name('schedule');
+Route::get('/', fn() => view('booking.home', [
+    'courts' => Court::active()->orderBy('name')->get(),
+]))->name('home');
+Route::get('/jadwal', function () {
+    $courts = Court::active()->orderBy('name')->get();
+    $scheduleCourts = $courts->map(fn (Court $court) => [
+        'id' => $court->id,
+        'name' => $court->name,
+        'location' => \Illuminate\Support\Str::slug($court->location),
+        'area' => $court->location,
+        'price' => $court->price_per_hour,
+    ])->values();
+
+    return view('booking.schedule', compact('courts', 'scheduleCourts'));
+})->name('schedule');
 
 // Protected routes
 Route::middleware(['auth.custom', 'auto.logout'])->group(function () {
@@ -54,6 +69,7 @@ Route::middleware(['auth.custom', 'auto.logout'])->group(function () {
 
     // Menu management - hanya admin
     Route::middleware(['role:superadmin'])->group(function () {
+        Route::resource('/courts', CourtController::class)->except(['show']);
         Route::resource('/menus', MenuController::class);
         Route::resource('/roles', RoleController::class);
         Route::post('/permissions/sync-routes', [PermissionController::class, 'syncRoutes'])->name('permissions.sync-routes');

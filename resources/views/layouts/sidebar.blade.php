@@ -104,6 +104,15 @@
             </li>
         @endforelse
 
+        @if ($user?->roles->contains('slug', 'superadmin'))
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('courts.index') }}">
+                    <span class="nav-icon"><i class="ti ti-building-stadium"></i></span>
+                    <span class="text">Master Lapangan</span>
+                </a>
+            </li>
+        @endif
+
         {{-- User Info --}}
         <li>
             <div class="text-center py-5 upgrade-ui">
@@ -216,6 +225,15 @@
                     <span class="nav-link text-muted">Tidak ada menu tersedia</span>
                 </li>
             @endforelse
+
+            @if ($user?->roles->contains('slug', 'superadmin'))
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('courts.index') }}">
+                        <span class="nav-icon"><i class="ti ti-building-stadium"></i></span>
+                        <span class="text">Master Lapangan</span>
+                    </a>
+                </li>
+            @endif
 
             {{-- User Info --}}
             <li>
