@@ -215,6 +215,55 @@ class VenueProfileTest extends TestCase
         $this->assertSame('#245c43', $venue->fresh()->primary_color);
     }
 
+    public function test_venue_hero_copy_can_be_managed_and_rendered_on_the_homepage(): void
+    {
+        $venue = Venue::create([
+            'name' => 'Venue Hero Copy',
+            'address' => 'Jakarta',
+            'latitude' => -6.2,
+            'longitude' => 106.8,
+            'is_active' => true,
+        ]);
+        $admin = $this->makeVenueAdmin();
+
+        $this->withSession(['user_id' => $admin->id])
+            ->get(route('venues.edit', $venue))
+            ->assertOk()
+            ->assertSee('name="hero_eyebrow"', false)
+            ->assertSee('name="hero_title"', false)
+            ->assertSee('name="hero_title_highlight"', false)
+            ->assertSee('name="hero_subtitle"', false);
+
+        $this->withSession(['user_id' => $admin->id])
+            ->put(route('venues.update', $venue), [
+                'name' => $venue->name,
+                'address' => $venue->address,
+                'latitude' => $venue->latitude,
+                'longitude' => $venue->longitude,
+                'hero_eyebrow' => 'Rally dimulai di sini',
+                'hero_title' => 'Bermain padel,',
+                'hero_title_highlight' => 'lebih seru bersama.',
+                'hero_subtitle' => 'Pilih venue dan jadwal yang paling cocok untukmu.',
+                'is_active' => '1',
+            ])
+            ->assertRedirect(route('venues.index'));
+
+        $this->assertDatabaseHas('venues', [
+            'id' => $venue->id,
+            'hero_eyebrow' => 'Rally dimulai di sini',
+            'hero_title' => 'Bermain padel,',
+            'hero_title_highlight' => 'lebih seru bersama.',
+            'hero_subtitle' => 'Pilih venue dan jadwal yang paling cocok untukmu.',
+        ]);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Rally dimulai di sini')
+            ->assertSee('Bermain padel,')
+            ->assertSee('lebih seru bersama.')
+            ->assertSee('Pilih venue dan jadwal yang paling cocok untukmu.');
+    }
+
     public function test_social_links_are_seeded_inactive_and_can_be_selected_for_public_display(): void
     {
         $this->seed(SocialLinkSeeder::class);

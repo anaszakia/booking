@@ -1166,9 +1166,9 @@
                 @endif
             </div>
             <div class="hero-content">
-                <div class="eyebrow"><span class="eyebrow-dot"></span> Your next game starts here</div>
-                <h1 id="hero-title">Main padel,<br><span>tanpa ribet.</span></h1>
-                <p class="hero-copy">Temukan lapangan favoritmu, pilih waktu main, dan ajak teman. Semua beres dalam beberapa klik.</p>
+                <div class="eyebrow"><span class="eyebrow-dot"></span> {{ $primaryVenue?->hero_eyebrow ?: 'Your next game starts here' }}</div>
+                <h1 id="hero-title">{{ $primaryVenue?->hero_title ?: 'Main padel,' }}<br><span>{{ $primaryVenue?->hero_title_highlight ?: 'tanpa ribet.' }}</span></h1>
+                <p class="hero-copy">{{ $primaryVenue?->hero_subtitle ?: 'Temukan lapangan favoritmu, pilih waktu main, dan ajak teman. Semua beres dalam beberapa klik.' }}</p>
                 <div class="hero-actions">
                     <a class="button" href="#lapangan">Temukan lapangan <span aria-hidden="true">↗</span></a>
                     <a class="hero-secondary" href="{{ route('schedule') }}">Lihat semua jadwal <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>

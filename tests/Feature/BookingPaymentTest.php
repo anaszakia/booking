@@ -315,6 +315,46 @@ class BookingPaymentTest extends TestCase
         $this->assertDatabaseHas('bookings', ['ulid' => $booking->ulid, 'status' => 'expired']);
     }
 
+    public function test_availability_returns_active_booking_details_without_customer_information(): void
+    {
+        [$venue, $court] = $this->makeBookableCourt();
+        $bookingDate = now()->addDays(3)->toDateString();
+
+        Booking::create([
+            'court_id' => $court->id,
+            'venue_id' => $venue->id,
+            'customer_name' => 'Private Customer',
+            'customer_phone' => '08123456789',
+            'booking_date' => $bookingDate,
+            'booking_time' => '09:00',
+            'amount' => $court->price_per_hour,
+            'status' => 'pending_verification',
+        ]);
+        Booking::create([
+            'court_id' => $court->id,
+            'venue_id' => $venue->id,
+            'customer_name' => 'Cancelled Customer',
+            'customer_phone' => '08987654321',
+            'booking_date' => $bookingDate,
+            'booking_time' => '11:00',
+            'amount' => $court->price_per_hour,
+            'status' => 'cancelled',
+        ]);
+
+        $this->get(route('booking.availability', ['from' => $bookingDate, 'to' => $bookingDate]))
+            ->assertOk()
+            ->assertJsonCount(1, 'bookings')
+            ->assertJsonFragment([
+                'court' => $court->ulid,
+                'courtName' => $court->name,
+                'date' => $bookingDate,
+                'time' => '09:00',
+                'status' => 'pending_verification',
+            ])
+            ->assertDontSee('Private Customer')
+            ->assertDontSee('08123456789');
+    }
+
     private function makeBookableCourt(): array
     {
         $venue = Venue::create([

@@ -31,6 +31,36 @@
                 @error('address') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
             <div class="mb-4">
+                <label class="form-label">Tulisan hero halaman depan</label>
+                <div class="form-text mb-3">Atur teks eyebrow, judul utama, dan deskripsi yang tampil di hero. Biarkan default untuk memakai teks bawaan.</div>
+                <div class="mb-3">
+                    <label for="hero_eyebrow" class="form-label small">Teks kecil (eyebrow)</label>
+                    <input id="hero_eyebrow" name="hero_eyebrow" class="form-control @error('hero_eyebrow') is-invalid @enderror"
+                        value="{{ old('hero_eyebrow', $venue->hero_eyebrow ?? 'Your next game starts here') }}" maxlength="120">
+                    @error('hero_eyebrow') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label for="hero_title" class="form-label small">Judul baris pertama</label>
+                        <input id="hero_title" name="hero_title" class="form-control @error('hero_title') is-invalid @enderror"
+                            value="{{ old('hero_title', $venue->hero_title ?? 'Main padel,') }}" maxlength="120">
+                        @error('hero_title') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-sm-6">
+                        <label for="hero_title_highlight" class="form-label small">Judul baris aksen</label>
+                        <input id="hero_title_highlight" name="hero_title_highlight" class="form-control @error('hero_title_highlight') is-invalid @enderror"
+                            value="{{ old('hero_title_highlight', $venue->hero_title_highlight ?? 'tanpa ribet.') }}" maxlength="120">
+                        @error('hero_title_highlight') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <label for="hero_subtitle" class="form-label small">Deskripsi hero</label>
+                    <textarea id="hero_subtitle" name="hero_subtitle" rows="3" maxlength="1000"
+                        class="form-control @error('hero_subtitle') is-invalid @enderror">{{ old('hero_subtitle', $venue->hero_subtitle ?? 'Temukan lapangan favoritmu, pilih waktu main, dan ajak teman. Semua beres dalam beberapa klik.') }}</textarea>
+                    @error('hero_subtitle') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+            </div>
+            <div class="mb-4">
                 <label class="form-label">Warna tema frontend</label>
                 <div class="row g-3">
                     <div class="col-sm-6">

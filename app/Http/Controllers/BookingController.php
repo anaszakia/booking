@@ -39,14 +39,19 @@ class BookingController extends Controller
 
         $this->expireUnpaidBookings();
         $bookings = Booking::query()
-            ->with('court:id,ulid')
+            ->with('court:id,ulid,name')
             ->blocksSlot()
-            ->whereBetween('booking_date', [$data['from'], $data['to']])
-            ->get(['court_id', 'booking_date', 'booking_time'])
+            ->whereDate('booking_date', '>=', $data['from'])
+            ->whereDate('booking_date', '<=', $data['to'])
+            ->orderBy('booking_date')
+            ->orderBy('booking_time')
+            ->get(['court_id', 'booking_date', 'booking_time', 'status'])
             ->map(fn (Booking $booking) => [
                 'court' => $booking->court->ulid,
+                'courtName' => $booking->court->name,
                 'date' => $booking->booking_date->toDateString(),
                 'time' => substr($booking->booking_time, 0, 5),
+                'status' => $booking->status,
             ])
             ->values();
 

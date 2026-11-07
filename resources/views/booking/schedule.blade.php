@@ -182,8 +182,7 @@
         .venue-select option { background: var(--surface); color: var(--text); }
         .legend { display: flex; flex-wrap: wrap; gap: 13px; color: var(--muted); font-size: 9px; }
         .legend-item { display: inline-flex; align-items: center; gap: 6px; }
-        .legend-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--available); }
-        .legend-dot.booked { background: var(--booked); }
+        .legend-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--brand); }
         .weekday-grid, .days-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
         .weekday-grid { padding-bottom: 8px; border-bottom: 1px solid var(--line); }
         .weekday { padding: 9px 2px; color: var(--muted); font-size: 9px; font-weight: 700; text-align: center; text-transform: uppercase; }
@@ -210,11 +209,7 @@
         .day-cell.today .day-number { background: var(--brand); color: #fff; }
         .day-cell.selected .day-number { color: var(--brand); font-weight: 800; }
         .day-cell.today.selected .day-number { background: var(--brand); color: #fff; }
-        .day-count { display: block; margin-top: 7px; color: var(--available); font-size: 8px; font-weight: 700; line-height: 1.3; }
-        .day-dots { display: flex; gap: 3px; margin-top: 6px; }
-        .day-dots span { width: 5px; height: 5px; border-radius: 50%; background: var(--available); }
-        .day-dots span.booked { background: var(--booked); }
-        .mobile-count { display: none; }
+        .day-count { display: block; margin-top: 7px; color: var(--brand); font-size: 8px; font-weight: 700; line-height: 1.3; }
         .calendar-footnote { margin: 14px 0 0; color: var(--muted); font-size: 9px; line-height: 1.6; }
         .schedule-panel { position: sticky; top: 94px; }
         .schedule-header { padding: 20px 20px 16px; border-bottom: 1px solid var(--line); }
@@ -257,6 +252,20 @@
         .book-slot:disabled { background: var(--surface-raised); color: var(--muted); cursor: not-allowed; }
         .book-slot.disabled { background: var(--surface-raised); color: var(--muted); cursor: not-allowed; pointer-events: none; }
         .empty-slots { padding: 34px 20px; color: var(--muted); font-size: 11px; line-height: 1.6; text-align: center; }
+        .bookings-dialog { width: min(460px, calc(100% - 32px)); max-height: min(75vh, 640px); padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 17px; background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+        .bookings-dialog::backdrop { background: rgba(3,8,5,.72); backdrop-filter: blur(4px); }
+        .bookings-dialog-inner { display: flex; max-height: inherit; flex-direction: column; }
+        .bookings-dialog-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 20px; border-bottom: 1px solid var(--line); }
+        .bookings-dialog-header h2 { margin: 0 0 5px; font: 700 17px "Manrope", sans-serif; }
+        .bookings-dialog-header p { margin: 0; color: var(--muted); font-size: 10px; }
+        .bookings-dialog-close { width: 32px; height: 32px; display: grid; flex: 0 0 auto; place-items: center; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-raised); color: var(--text); font-size: 18px; cursor: pointer; }
+        .booking-details-list { display: flex; flex-direction: column; gap: 9px; overflow: auto; padding: 14px; }
+        .booking-detail-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-raised); }
+        .booking-detail-copy { min-width: 0; }
+        .booking-detail-time { display: block; margin-bottom: 4px; color: var(--brand); font: 800 14px "Manrope", sans-serif; }
+        .booking-detail-court { display: block; color: var(--text); font-size: 11px; font-weight: 700; }
+        .booking-detail-status { flex: 0 0 auto; padding: 6px 8px; border-radius: 99px; background: color-mix(in srgb, var(--venue-accent) 15%, var(--surface)); color: var(--text); font-size: 9px; font-weight: 700; }
+        .booking-details-empty { padding: 28px 18px; color: var(--muted); font-size: 11px; line-height: 1.6; text-align: center; }
         .summary-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; padding: 0 0 62px; }
         .summary-card { padding: 17px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface); }
         .summary-value { display: block; margin-bottom: 6px; color: var(--brand); font: 800 21px "Manrope", sans-serif; }
@@ -282,9 +291,7 @@
             .schedule-panel { position: static; }
             .day-cell { min-height: 68px; padding: 5px 3px; text-align: center; }
             .day-number { width: 23px; height: 23px; font-size: 10px; }
-            .day-count { display: none; }
-            .day-dots { justify-content: center; margin-top: 5px; }
-            .mobile-count { display: inline; }
+            .day-count { margin-top: 4px; font-size: 7px; }
             .slot-list { max-height: none; }
             .summary-row { padding-bottom: 42px; }
         }
@@ -302,7 +309,6 @@
             .venue-select { width: 100%; }
             .weekday { font-size: 8px; }
             .day-cell { min-height: 59px; }
-            .day-dots span { width: 4px; height: 4px; }
             .summary-row { grid-template-columns: 1fr; gap: 8px; }
             .summary-card { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; }
             .summary-value { margin: 0; font-size: 17px; }
@@ -368,8 +374,7 @@
                         </select>
                     </label>
                     <div class="legend" aria-label="Keterangan jadwal">
-                        <span class="legend-item"><span class="legend-dot"></span>Tersedia</span>
-                        <span class="legend-item"><span class="legend-dot booked"></span>Penuh</span>
+                        <span class="legend-item"><span class="legend-dot"></span>Booking aktif</span>
                     </div>
                 </div>
                 <div class="weekday-grid" aria-hidden="true">
@@ -405,6 +410,19 @@
         </div>
     </footer>
 
+    <dialog class="bookings-dialog" id="bookings-dialog" aria-labelledby="bookings-dialog-title">
+        <div class="bookings-dialog-inner">
+            <header class="bookings-dialog-header">
+                <div>
+                    <h2 id="bookings-dialog-title">Detail booking</h2>
+                    <p id="bookings-dialog-date"></p>
+                </div>
+                <button class="bookings-dialog-close" type="button" aria-label="Tutup detail booking" data-close-bookings-dialog>&times;</button>
+            </header>
+            <div class="booking-details-list" id="booking-details-list" aria-live="polite"></div>
+        </div>
+    </dialog>
+
     <script>
         const themeToggle = document.getElementById('theme-toggle');
         const venues = @json($scheduleCourts);
@@ -420,10 +438,14 @@
         const venueFilter = document.getElementById('venue-filter');
         const selectedDateLabel = document.getElementById('selected-date-label');
         const slotTotal = document.getElementById('slot-total');
+        const bookingsDialog = document.getElementById('bookings-dialog');
+        const bookingsDialogDate = document.getElementById('bookings-dialog-date');
+        const bookingDetailsList = document.getElementById('booking-details-list');
         let savedBookings = [];
         let availabilityLoaded = false;
         let availabilityError = false;
         let availabilityRequest = 0;
+        let detailsDate = null;
 
         venues.forEach((venue) => {
             const option = document.createElement('option');
@@ -441,6 +463,77 @@
 
         function formatPrice(price) {
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(price);
+        }
+
+        function bookingsForDate(date) {
+            const key = date instanceof Date ? dateKey(date) : date;
+            return savedBookings.filter((booking) => (
+                booking.date === key
+                && (selectedVenue === 'all' || booking.court === selectedVenue)
+            ));
+        }
+
+        function renderBookingDetails() {
+            if (!bookingsDialog.open || !detailsDate) return;
+
+            bookingsDialogDate.textContent = new Intl.DateTimeFormat('id-ID', { dateStyle: 'full' }).format(detailsDate);
+            bookingDetailsList.replaceChildren();
+
+            if (availabilityError) {
+                const error = document.createElement('p');
+                error.className = 'booking-details-empty';
+                error.textContent = 'Detail booking tidak dapat dimuat. Silakan coba lagi.';
+                bookingDetailsList.append(error);
+                return;
+            }
+
+            if (!availabilityLoaded) {
+                const loading = document.createElement('p');
+                loading.className = 'booking-details-empty';
+                loading.textContent = 'Memuat detail booking...';
+                bookingDetailsList.append(loading);
+                return;
+            }
+
+            const bookings = bookingsForDate(detailsDate)
+                .sort((a, b) => a.time.localeCompare(b.time) || a.courtName.localeCompare(b.courtName));
+
+            if (!bookings.length) {
+                const empty = document.createElement('p');
+                empty.className = 'booking-details-empty';
+                empty.textContent = 'Tidak ada booking aktif pada tanggal ini.';
+                bookingDetailsList.append(empty);
+                return;
+            }
+
+            bookings.forEach((booking) => {
+                const card = document.createElement('article');
+                card.className = 'booking-detail-card';
+                const copy = document.createElement('div');
+                copy.className = 'booking-detail-copy';
+                const time = document.createElement('span');
+                time.className = 'booking-detail-time';
+                time.textContent = booking.time;
+                const court = document.createElement('span');
+                court.className = 'booking-detail-court';
+                court.textContent = booking.courtName;
+                const status = document.createElement('span');
+                status.className = 'booking-detail-status';
+                status.textContent = ({
+                    pending_payment: 'Menunggu pembayaran',
+                    pending_verification: 'Menunggu verifikasi',
+                    confirmed: 'Dikonfirmasi',
+                })[booking.status] || 'Booking aktif';
+                copy.append(time, court);
+                card.append(copy, status);
+                bookingDetailsList.append(card);
+            });
+        }
+
+        function showBookingDetails(date) {
+            detailsDate = new Date(date);
+            if (!bookingsDialog.open) bookingsDialog.showModal();
+            renderBookingDetails();
         }
 
         function makeSlots(date) {
@@ -536,36 +629,29 @@
                 const isPast = date < today;
                 const isSelected = key === selectedKey;
                 const isToday = key === todayKey;
-                const visibleCourts = venues.filter((venue) => venue.paymentReady && (selectedVenue === 'all' || selectedVenue === venue.ulid));
-                const venueCount = visibleCourts.length;
-                const remainingTimes = key === todayKey
-                    ? hourSlots.filter((time) => new Date(`${key}T${time}:00`) > new Date()).length
-                    : hourSlots.length;
-                const totalSlots = isPast ? 0 : venueCount * remainingTimes;
-                const availability = isPast ? 0 : makeSlots(date).filter((slot) => slot.available).length;
-                const booked = totalSlots - availability;
+                const bookingCount = availabilityError ? '–' : availabilityLoaded ? bookingsForDate(date).length : '…';
                 const classes = ['day-cell'];
                 if (!inMonth) classes.push('outside');
                 if (isPast) classes.push('past');
                 if (isSelected) classes.push('selected');
                 if (isToday) classes.push('today');
-                const dots = isPast ? '' : `<span></span><span></span>${booked ? '<span class="booked"></span>' : ''}`;
                 const dateLabel = new Intl.DateTimeFormat('id-ID', { dateStyle: 'full' }).format(date);
 
                 cells.push(`
-                    <button class="${classes.join(' ')}" type="button" role="gridcell" data-date="${key}" aria-label="${dateLabel}${isPast ? ', sudah lewat' : `, ${availability} slot tersedia`}" ${isPast ? 'disabled' : ''} ${isSelected ? 'aria-selected="true"' : ''}>
+                    <button class="${classes.join(' ')}" type="button" role="gridcell" data-date="${key}" aria-label="${dateLabel}, ${bookingCount} booking" ${isSelected ? 'aria-selected="true"' : ''}>
                         <span class="day-number">${date.getDate()}</span>
-                        ${totalSlots ? `<span class="day-count">${availability}<span class="mobile-count"> slot</span> tersedia</span><span class="day-dots" aria-hidden="true">${dots}</span>` : ''}
+                        <span class="day-count">${bookingCount} booking</span>
                     </button>`);
             }
 
             daysGrid.innerHTML = cells.join('');
-            daysGrid.querySelectorAll('.day-cell:not(:disabled)').forEach((cell) => {
+            daysGrid.querySelectorAll('.day-cell').forEach((cell) => {
                 cell.addEventListener('click', () => {
                     const [cellYear, cellMonth, cellDay] = cell.dataset.date.split('-').map(Number);
                     selectedDate = new Date(cellYear, cellMonth - 1, cellDay);
                     renderCalendar();
                     renderSlots();
+                    showBookingDetails(selectedDate);
                     loadAvailability();
                 });
             });
@@ -590,6 +676,13 @@
             selectedVenue = venueFilter.value;
             renderCalendar();
             renderSlots();
+            renderBookingDetails();
+        });
+        document.querySelectorAll('[data-close-bookings-dialog]').forEach((button) => {
+            button.addEventListener('click', () => bookingsDialog.close());
+        });
+        bookingsDialog.addEventListener('click', (event) => {
+            if (event.target === bookingsDialog) bookingsDialog.close();
         });
         async function loadAvailability() {
             const requestId = ++availabilityRequest;
@@ -602,6 +695,7 @@
             availabilityError = false;
             renderCalendar();
             renderSlots();
+            renderBookingDetails();
             try {
                 const response = await fetch(`{{ route('booking.availability') }}?${query}`, { headers: { Accept: 'application/json' } });
                 if (!response.ok) throw new Error('Jadwal tidak dapat dimuat.');
@@ -611,6 +705,7 @@
                 availabilityLoaded = true;
                 renderCalendar();
                 renderSlots();
+                renderBookingDetails();
             } catch (error) {
                 console.error('Ketersediaan jadwal gagal dimuat.', error);
                 if (requestId !== availabilityRequest) return;
@@ -618,6 +713,7 @@
                 availabilityLoaded = true;
                 renderCalendar();
                 renderSlots();
+                renderBookingDetails();
             }
         }
 
