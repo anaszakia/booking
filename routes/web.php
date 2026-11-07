@@ -7,6 +7,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\CourtController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FinancialReportController;
 use App\Http\Controllers\SocialLinkController;
 use App\Http\Controllers\VenueController;
@@ -92,7 +93,7 @@ Route::get('/jadwal', function () {
 
 // Protected routes
 Route::middleware(['auth.custom', 'auto.logout'])->group(function () {
-    Route::get('/dashboard', fn() => view('dashboard'))->name('dashboard');
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::middleware(['role:superadmin,staff'])->group(function () {
         Route::get('/booking-calendar', [BookingController::class, 'calendar'])->name('bookings.calendar');
