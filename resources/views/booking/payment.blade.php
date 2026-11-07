@@ -175,7 +175,7 @@
                 </div>
                 <div class="details">
                     <div class="detail"><span class="detail-label">Lapangan</span><div class="detail-value">{{ $booking->court->name }}</div></div>
-                    <div class="detail"><span class="detail-label">Jadwal</span><div class="detail-value">{{ $booking->booking_date->locale('id')->translatedFormat('D, d M Y') }} · {{ substr($booking->booking_time, 0, 5) }}</div></div>
+                    <div class="detail"><span class="detail-label">Jadwal</span><div class="detail-value">{{ $booking->booking_date->locale('id')->translatedFormat('D, d M Y') }} · {{ substr($booking->booking_time, 0, 5) }}–{{ \Illuminate\Support\Carbon::parse($booking->booking_time)->addHours($booking->duration_hours)->format('H:i') }} ({{ $booking->duration_hours }} jam)</div></div>
                     <div class="detail"><span class="detail-label">Nama pemesan</span><div class="detail-value">{{ $booking->customer_name }}</div></div>
                     <div class="detail"><span class="detail-label">Total pembayaran</span><div class="amount">Rp{{ number_format($booking->amount, 0, ',', '.') }}</div></div>
                 </div>

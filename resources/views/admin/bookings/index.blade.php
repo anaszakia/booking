@@ -43,7 +43,7 @@
                                 <td><code>{{ $booking->booking_number }}</code><div class="small text-muted">Dibuat {{ $booking->created_at->format('d/m/Y H:i') }}</div></td>
                                 <td>{{ $booking->customer_name }}<div class="small text-muted">{{ $booking->customer_phone }}</div></td>
                                 <td>{{ $booking->court->name }}<div class="small text-muted">{{ $booking->venue->name }}</div></td>
-                                <td>{{ $booking->booking_date->format('d/m/Y') }} · {{ substr($booking->booking_time, 0, 5) }}</td>
+                                <td>{{ $booking->booking_date->format('d/m/Y') }} · {{ substr($booking->booking_time, 0, 5) }}–{{ \Illuminate\Support\Carbon::parse($booking->booking_time)->addHours($booking->duration_hours)->format('H:i') }} ({{ $booking->duration_hours }} jam)</td>
                                 <td>Rp{{ number_format($booking->amount, 0, ',', '.') }}</td>
                                 <td>
                                     <span class="badge {{ $booking->booking_source === 'staff' ? 'bg-primary-subtle text-primary-emphasis' : 'bg-secondary-subtle text-secondary-emphasis' }}">

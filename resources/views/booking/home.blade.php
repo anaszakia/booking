@@ -1010,7 +1010,7 @@
         .booking-field { display: flex; flex-direction: column; gap: 7px; }
         .booking-field.full { grid-column: 1 / -1; }
         .booking-field label { color: #aab5ab; font-size: 10px; font-weight: 700; }
-        .booking-field input, .booking-field textarea {
+        .booking-field input, .booking-field select, .booking-field textarea {
             width: 100%;
             padding: 12px 13px;
             border: 1px solid rgba(255,255,255,.14);
@@ -1021,7 +1021,7 @@
             font-size: 12px;
             transition: border-color .2s, box-shadow .2s;
         }
-        .booking-field input:focus, .booking-field textarea:focus { border-color: var(--lime); box-shadow: 0 0 0 3px color-mix(in srgb, var(--venue-accent) 10%, transparent); }
+        .booking-field input:focus, .booking-field select:focus, .booking-field textarea:focus { border-color: var(--lime); box-shadow: 0 0 0 3px color-mix(in srgb, var(--venue-accent) 10%, transparent); }
         .booking-field textarea { min-height: 78px; resize: vertical; }
         .booking-field input::placeholder, .booking-field textarea::placeholder { color: #718075; }
         .booking-note { margin: 14px 0 0; color: #829085; font-size: 10px; line-height: 1.6; }
@@ -1035,6 +1035,7 @@
         [data-theme="light"] .dialog-close,
         [data-theme="light"] .dialog-cancel { border-color: #e1e7de; color: #344239; }
         [data-theme="light"] .booking-field input,
+        [data-theme="light"] .booking-field select,
         [data-theme="light"] .booking-field textarea { border-color: #dfe6dc; background: #f8faf6; color: #17231d; }
         [data-theme="light"] .booking-field input::placeholder,
         [data-theme="light"] .booking-field textarea::placeholder { color: #89958b; }
@@ -1296,7 +1297,7 @@
                             <div class="venue-divider"></div>
                             <div class="venue-bottom">
                                 <span class="price"><strong>Rp{{ number_format($court->price_per_hour, 0, ',', '.') }}</strong> <span>/ jam</span></span>
-                                <button class="button small-button book-button" type="button" data-venue="{{ $court->name }}" data-venue-ulid="{{ $court->ulid }}" @disabled(! $court->venue?->is_active || (! $court->venue->qris_path && $court->venue->bankAccounts->isEmpty()))>
+                                <button class="button small-button book-button" type="button" data-venue="{{ $court->name }}" data-venue-ulid="{{ $court->ulid }}" data-price="{{ $court->price_per_hour }}" @disabled(! $court->venue?->is_active || (! $court->venue->qris_path && $court->venue->bankAccounts->isEmpty()))>
                                     {{ ! $court->venue?->is_active || (! $court->venue->qris_path && $court->venue->bankAccounts->isEmpty()) ? 'Pembayaran belum tersedia' : 'Pilih jadwal' }}
                                 </button>
                             </div>
@@ -1411,19 +1412,30 @@
             </div>
             <div class="booking-summary">
                 <strong id="booking-venue">Nama lapangan</strong>
-                <span id="booking-schedule">Pilih tanggal dan slot jam</span>
+                <span>
+                    <span id="booking-schedule">Pilih tanggal dan slot jam</span>
+                    <span id="booking-total" style="display:block;margin-top:4px;color:var(--venue-accent);font-weight:700"></span>
+                </span>
             </div>
             <div class="booking-field booking-date-field">
                 <label for="booking-date">Tanggal main *</label>
                 <input id="booking-date" name="booking_date" type="date" value="{{ old('booking_date') }}" required>
             </div>
-            <div class="booking-time-heading">
-                <label for="booking-time-slots">Pilih jam mulai *</label>
-                <span>Durasi 1 jam</span>
+            <div class="booking-fields">
+                <div class="booking-field">
+                    <label for="booking-slot-time">Jam mulai *</label>
+                    <input id="booking-slot-time" name="booking_time" type="time" min="07:00" max="21:59" step="60" required>
+                </div>
+                <div class="booking-field">
+                    <label for="booking-duration">Durasi *</label>
+                    <select id="booking-duration" name="duration_hours" required>
+                        @for ($hours = 1; $hours <= 15; $hours++)
+                            <option value="{{ $hours }}">{{ $hours }} jam</option>
+                        @endfor
+                    </select>
+                </div>
             </div>
-            <div class="booking-time-grid" id="booking-time-slots" role="group" aria-label="Pilihan jam booking"></div>
             <p class="booking-availability" id="booking-availability" aria-live="polite">Pilih tanggal untuk melihat slot yang tersedia.</p>
-            <input id="booking-slot-time" name="booking_time" type="hidden" required>
             <div class="booking-fields">
                 <div class="booking-field full">
                     <label for="customer-name">Nama lengkap *</label>
@@ -1541,14 +1553,15 @@
         const bookingTime = document.getElementById('play-time');
         const bookingLocation = document.getElementById('location');
         const bookingDateField = document.getElementById('booking-date');
-        const bookingSlotGrid = document.getElementById('booking-time-slots');
-        const bookingSlotInput = document.getElementById('booking-slot-time');
+        const bookingTimeInput = document.getElementById('booking-slot-time');
+        const bookingDurationInput = document.getElementById('booking-duration');
         const bookingAvailability = document.getElementById('booking-availability');
         const bookingSubmit = bookingForm.querySelector('[type="submit"]');
-        const bookingSlotTimes = ['07:00', '09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00'];
         const bookingCourtInput = document.getElementById('booking-court-ulid');
         let selectedBookingVenue = null;
-        let selectedBookingTime = '';
+        let selectedCourtPrice = 0;
+        let dayBookings = [];
+        let availabilityLoaded = false;
         let availabilityRequest = 0;
         let activeType = 'all';
         let toastTimer;
@@ -1589,25 +1602,66 @@
             const dateLabel = date
                 ? new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium' }).format(new Date(`${date}T00:00:00`))
                 : 'Pilih tanggal';
-            const timeLabel = selectedBookingTime ? `Pukul ${selectedBookingTime}` : 'Pilih jam';
-            document.getElementById('booking-schedule').textContent = `${dateLabel} · ${timeLabel}`;
+            const timeLabel = bookingTimeInput.value ? `Pukul ${bookingTimeInput.value}` : 'Pilih jam';
+            const durationLabel = bookingDurationInput.value ? `${bookingDurationInput.value} jam` : '';
+            document.getElementById('booking-schedule').textContent = `${dateLabel} · ${timeLabel}${durationLabel ? ` · ${durationLabel}` : ''}`;
+            document.getElementById('booking-total').textContent = selectedCourtPrice && durationLabel
+                ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(selectedCourtPrice * Number(bookingDurationInput.value))
+                : '';
+        }
+
+        function validateBookingSelection() {
+            updateBookingSummary();
+            const time = bookingTimeInput.value;
+            const duration = Number(bookingDurationInput.value);
+            if (!selectedBookingVenue || !currentDateKey() || !time || !duration || !availabilityLoaded) {
+                bookingSubmit.disabled = true;
+                return;
+            }
+
+            const [hours, minutes] = time.split(':').map(Number);
+            const start = hours * 60 + minutes;
+            const end = start + duration * 60;
+            if (start < 420 || end > 1320) {
+                bookingAvailability.textContent = 'Booking harus berada di antara pukul 07.00 hingga 22.00.';
+                bookingAvailability.classList.add('error');
+                bookingSubmit.disabled = true;
+                return;
+            }
+            if (currentDateKey() === localToday && new Date(`${currentDateKey()}T${time}:00`) <= new Date()) {
+                bookingAvailability.textContent = 'Jam mulai sudah lewat. Pilih waktu lain.';
+                bookingAvailability.classList.add('error');
+                bookingSubmit.disabled = true;
+                return;
+            }
+
+            const overlaps = dayBookings.some((booking) => {
+                const [bookedHour, bookedMinute] = booking.time.split(':').map(Number);
+                const bookedStart = bookedHour * 60 + bookedMinute;
+                const bookedEnd = bookedStart + Number(booking.durationHours) * 60;
+                return start < bookedEnd && end > bookedStart;
+            });
+            bookingAvailability.classList.toggle('error', overlaps);
+            bookingAvailability.textContent = overlaps
+                ? 'Rentang waktu bertabrakan dengan booking lain. Silakan pilih jam atau durasi lain.'
+                : `Waktu tersedia · ${duration} jam · harga dihitung berdasarkan tarif per jam.`;
+            bookingSubmit.disabled = overlaps;
         }
 
         async function renderBookingSlots() {
             const requestId = ++availabilityRequest;
-            selectedBookingTime = '';
-            bookingSlotInput.value = '';
+            bookingTimeInput.value = '';
+            dayBookings = [];
+            availabilityLoaded = false;
             updateBookingSummary();
 
             if (!selectedBookingVenue || !currentDateKey()) {
-                bookingSlotGrid.replaceChildren();
                 bookingAvailability.textContent = 'Pilih tanggal untuk melihat slot yang tersedia.';
                 bookingAvailability.classList.remove('error');
                 bookingSubmit.disabled = true;
                 return;
             }
 
-            bookingSlotGrid.replaceChildren();
             bookingAvailability.classList.remove('error');
             bookingAvailability.textContent = 'Memuat jadwal...';
             bookingSubmit.disabled = true;
@@ -1626,57 +1680,19 @@
             }
             if (requestId !== availabilityRequest) return;
 
-            const matchingSlots = bookingSlotTimes.filter((time) => {
-                const hour = Number(time.slice(0, 2));
-                return bookingTime.value === 'all'
-                    || (bookingTime.value === 'pagi' && hour < 11)
-                    || (bookingTime.value === 'siang' && hour >= 11 && hour < 16)
-                    || (bookingTime.value === 'malam' && hour >= 16);
-            });
-            let availableCount = 0;
-
-            matchingSlots.forEach((time) => {
-                const alreadyBooked = bookedSlots.some((slot) => (
-                    slot.court === selectedBookingVenue && slot.date === currentDateKey() && slot.time === time
-                ));
-                const isPastToday = currentDateKey() === localToday && new Date(`${currentDateKey()}T${time}:00`) <= new Date();
-                const available = !alreadyBooked && !isPastToday;
-                if (available) availableCount += 1;
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'booking-time-slot';
-                button.textContent = time;
-                button.dataset.slot = time;
-                button.disabled = !available;
-                button.setAttribute('aria-label', `${time}, ${available ? 'tersedia' : 'tidak tersedia'}`);
-                if (!available) button.title = alreadyBooked ? 'Slot ini sudah dipesan.' : 'Waktu ini sudah lewat.';
-                button.addEventListener('click', () => {
-                    selectedBookingTime = time;
-                    bookingSlotInput.value = time;
-                    bookingSlotGrid.querySelectorAll('.booking-time-slot').forEach((slotButton) => {
-                        slotButton.classList.toggle('selected', slotButton === button);
-                        slotButton.setAttribute('aria-pressed', String(slotButton === button));
-                    });
-                    bookingAvailability.textContent = `${availableCount} slot tersedia untuk tanggal ini.`;
-                    bookingSubmit.disabled = false;
-                    updateBookingSummary();
-                });
-                bookingSlotGrid.append(button);
-            });
-
-            bookingAvailability.textContent = availableCount
-                ? `${availableCount} slot tersedia untuk tanggal ini.`
-                : 'Tidak ada slot tersedia. Silakan pilih tanggal lain.';
-            bookingSubmit.disabled = true;
+            dayBookings = bookedSlots.filter((slot) => slot.court === selectedBookingVenue && slot.date === currentDateKey());
+            availabilityLoaded = true;
+            bookingAvailability.textContent = 'Pilih jam mulai dan durasi.';
+            validateBookingSelection();
         }
 
         bookingDateField.addEventListener('change', renderBookingSlots);
-        bookingTime.addEventListener('change', () => {
-            if (bookingDialog.open) renderBookingSlots();
-        });
+        bookingTimeInput.addEventListener('input', validateBookingSelection);
+        bookingDurationInput.addEventListener('change', validateBookingSelection);
 
         async function openBooking(button, preferredDate = searchDate.value, preferredSlot = '') {
             selectedBookingVenue = button.dataset.venueUlid;
+            selectedCourtPrice = Number(button.dataset.price);
             bookingCourtInput.value = selectedBookingVenue;
             document.getElementById('booking-venue').textContent = button.dataset.venue;
             bookingDateField.value = preferredDate && preferredDate >= localToday ? preferredDate : localToday;
@@ -1685,13 +1701,8 @@
             document.getElementById('customer-name').focus();
 
             if (preferredSlot) {
-                const slotButton = [...bookingSlotGrid.querySelectorAll('.booking-time-slot')]
-                    .find((slot) => slot.dataset.slot === preferredSlot && !slot.disabled);
-                if (slotButton) slotButton.click();
-                else {
-                    bookingAvailability.textContent = 'Slot dari kalender sudah tidak tersedia. Pilih jam lain.';
-                    bookingAvailability.classList.add('error');
-                }
+                bookingTimeInput.value = preferredSlot;
+                validateBookingSelection();
             }
         }
 
@@ -1757,10 +1768,13 @@
             if (event.target === bookingDialog) bookingDialog.close();
         });
         bookingForm.addEventListener('submit', (event) => {
-            if (!currentDateKey() || !selectedBookingTime) {
+            validateBookingSelection();
+            if (!currentDateKey() || !bookingTimeInput.value || !availabilityLoaded || bookingSubmit.disabled) {
                 event.preventDefault();
-                bookingAvailability.textContent = 'Pilih tanggal dan jam yang masih tersedia sebelum melanjutkan.';
-                bookingAvailability.classList.add('error');
+                if (!currentDateKey() || !bookingTimeInput.value) {
+                    bookingAvailability.textContent = 'Pilih tanggal dan jam mulai sebelum melanjutkan.';
+                    bookingAvailability.classList.add('error');
+                }
                 return;
             }
             bookingSubmit.disabled = true;
@@ -1783,7 +1797,9 @@
             targetBookButton
             && datePattern.test(scheduledDate || '')
             && scheduledDate >= localToday
-            && bookingSlotTimes.includes(scheduledSlot)
+            && /^([01]\d|2[0-3]):[0-5]\d$/.test(scheduledSlot || '')
+            && Number(scheduledSlot.slice(0, 2)) >= 7
+            && Number(scheduledSlot.slice(0, 2)) <= 21
             && [...bookingLocation.options].some((option) => option.value === scheduledLocation)
         ) {
             const hour = Number(scheduledSlot.slice(0, 2));

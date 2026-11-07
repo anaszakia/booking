@@ -48,10 +48,17 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label" for="booking_time">Jam mulai</label>
-                            <select class="form-select @error('booking_time') is-invalid @enderror" id="booking_time" name="booking_time" required disabled>
-                                <option value="">Pilih lapangan dan tanggal</option>
-                            </select>
+                            <input class="form-control @error('booking_time') is-invalid @enderror" id="booking_time" name="booking_time" type="time" min="07:00" max="21:59" step="60" value="{{ old('booking_time') }}" required disabled>
                             @error('booking_time') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" for="duration_hours">Durasi</label>
+                            <select class="form-select @error('duration_hours') is-invalid @enderror" id="duration_hours" name="duration_hours" required>
+                                @for ($hours = 1; $hours <= 15; $hours++)
+                                    <option value="{{ $hours }}" @selected((int) old('duration_hours', 1) === $hours)>{{ $hours }} jam</option>
+                                @endfor
+                            </select>
+                            @error('duration_hours') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             <div class="form-text" id="availability-message" aria-live="polite"></div>
                         </div>
 
@@ -119,13 +126,51 @@
             const court = document.getElementById('court_ulid');
             const date = document.getElementById('booking_date');
             const time = document.getElementById('booking_time');
+            const duration = document.getElementById('duration_hours');
             const message = document.getElementById('availability-message');
             const paymentOption = document.getElementById('payment_option');
             const paymentMethodField = document.getElementById('payment-method-field');
             const paymentMethod = document.getElementById('payment_method');
-            const slots = ['07:00', '09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00'];
             const availabilityUrl = @json(route('booking.availability'));
             const selectedTime = @json(old('booking_time'));
+            let dayBookings = [];
+            let loadedFor = '';
+            const form = time.form;
+
+            const minutes = (timeValue) => {
+                const [hours, mins] = timeValue.split(':').map(Number);
+                return hours * 60 + mins;
+            };
+
+            const validateSelection = () => {
+                time.setCustomValidity('');
+                if (!court.value || !date.value || !time.value || loadedFor !== `${court.value}:${date.value}`) return;
+                const start = minutes(time.value);
+                const end = start + Number(duration.value) * 60;
+                if (start < 420 || end > 1320) {
+                    message.textContent = 'Booking harus berada di antara pukul 07.00 hingga 22.00.';
+                    time.setCustomValidity('Booking harus berada di antara pukul 07.00 hingga 22.00.');
+                    return;
+                }
+                const now = new Date();
+                const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                if (date.value === today && new Date(`${date.value}T${time.value}:00`) <= now) {
+                    message.textContent = 'Jam mulai sudah lewat. Pilih waktu lain.';
+                    time.setCustomValidity('Jam mulai harus masih akan datang.');
+                    return;
+                }
+
+                const overlaps = dayBookings.some((booking) => {
+                    if (booking.court !== court.value || booking.date !== date.value) return false;
+                    const bookedStart = minutes(booking.time);
+                    const bookedEnd = bookedStart + Number(booking.durationHours) * 60;
+                    return start < bookedEnd && end > bookedStart;
+                });
+                message.textContent = overlaps
+                    ? 'Rentang waktu bertabrakan dengan booking lain.'
+                    : `Waktu tersedia · ${duration.value} jam.`;
+                if (overlaps) time.setCustomValidity('Rentang waktu bertabrakan dengan booking lain.');
+            };
 
             const syncPaymentMethod = () => {
                 const onsite = paymentOption.value === 'onsite';
@@ -135,11 +180,11 @@
             };
 
             const loadAvailability = async () => {
-                time.replaceChildren(new Option('Memuat jadwal...', ''));
-                time.disabled = true;
+                time.disabled = !court.value || !date.value;
                 message.textContent = '';
+                loadedFor = '';
+                dayBookings = [];
                 if (!court.value || !date.value) {
-                    time.replaceChildren(new Option('Pilih lapangan dan tanggal', ''));
                     return;
                 }
 
@@ -150,33 +195,31 @@
                         throw new Error('Jadwal tidak dapat dimuat. Muat ulang halaman atau coba lagi.');
                     }
                     const { bookings } = await response.json();
-                    const bookedTimes = new Set(bookings
-                        .filter((booking) => booking.court === court.value && booking.date === date.value)
-                        .map((booking) => booking.time));
+                    dayBookings = bookings;
+                    loadedFor = `${court.value}:${date.value}`;
                     const now = new Date();
                     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-                    const nowTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-                    time.replaceChildren(new Option('Pilih jam tersedia', ''));
-                    let availableCount = 0;
-                    slots.forEach((slot) => {
-                        const option = new Option(slot, slot);
-                        const hasPassed = date.value === today && slot <= nowTime;
-                        option.disabled = bookedTimes.has(slot) || hasPassed;
-                        if (!option.disabled) availableCount += 1;
-                        if (slot === selectedTime && !option.disabled) option.selected = true;
-                        time.add(option);
-                    });
-                    time.disabled = availableCount === 0;
-                    message.textContent = availableCount ? `${availableCount} slot tersedia.` : 'Tidak ada slot tersedia pada tanggal ini.';
+                    time.disabled = false;
+                    if (date.value === today && selectedTime && selectedTime <= `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`) {
+                        time.value = '';
+                    }
+                    validateSelection();
                 } catch (error) {
-                    time.replaceChildren(new Option('Jadwal gagal dimuat', ''));
-                    message.textContent = error.message;
+                    time.disabled = true;
+                    message.textContent = error.message || 'Jadwal gagal dimuat.';
                 }
             };
 
             court.addEventListener('change', loadAvailability);
             date.addEventListener('change', loadAvailability);
+            time.addEventListener('input', validateSelection);
+            duration.addEventListener('change', validateSelection);
+            form.addEventListener('submit', (event) => {
+                if (loadedFor !== `${court.value}:${date.value}`) {
+                    event.preventDefault();
+                    message.textContent = 'Jadwal belum berhasil diverifikasi. Muat ulang ketersediaan terlebih dahulu.';
+                }
+            });
             paymentOption.addEventListener('change', syncPaymentMethod);
             syncPaymentMethod();
             loadAvailability();

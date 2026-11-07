@@ -426,7 +426,7 @@
     <script>
         const themeToggle = document.getElementById('theme-toggle');
         const venues = @json($scheduleCourts);
-        const hourSlots = ['07:00', '09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00'];
+        const hourSlots = Array.from({ length: 15 }, (_, index) => `${String(index + 7).padStart(2, '0')}:00`);
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         let visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -513,7 +513,9 @@
                 copy.className = 'booking-detail-copy';
                 const time = document.createElement('span');
                 time.className = 'booking-detail-time';
-                time.textContent = booking.time;
+                const [startHour, startMinute] = booking.time.split(':').map(Number);
+                const endMinutes = (startHour * 60) + startMinute + (Number(booking.durationHours) * 60);
+                time.textContent = `${booking.time}–${String(Math.floor(endMinutes / 60)).padStart(2, '0')}:${String(endMinutes % 60).padStart(2, '0')} (${booking.durationHours} jam)`;
                 const court = document.createElement('span');
                 court.className = 'booking-detail-court';
                 court.textContent = booking.courtName;
@@ -546,11 +548,15 @@
                     time,
                     available: availabilityLoaded
                         && venue.paymentReady
-                        && !savedBookings.some((booking) => (
-                            booking.court === venue.ulid
-                            && booking.date === dateString
-                            && booking.time === time
-                        ))
+                        && !savedBookings.some((booking) => {
+                            if (booking.court !== venue.ulid || booking.date !== dateString) return false;
+                            const [bookedHour, bookedMinute] = booking.time.split(':').map(Number);
+                            const [slotHour, slotMinute] = time.split(':').map(Number);
+                            const bookedStart = bookedHour * 60 + bookedMinute;
+                            const bookedEnd = bookedStart + Number(booking.durationHours) * 60;
+                            const slotStart = slotHour * 60 + slotMinute;
+                            return slotStart < bookedEnd && slotStart + 60 > bookedStart;
+                        })
                         && !(dateString === dateKey(today) && new Date(`${dateString}T${time}:00`) <= new Date()),
                 })))
                 .sort((a, b) => a.time.localeCompare(b.time) || a.venue.name.localeCompare(b.venue.name));

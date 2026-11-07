@@ -25,6 +25,7 @@ class Booking extends Model
         'notes',
         'booking_date',
         'booking_time',
+        'duration_hours',
         'amount',
         'status',
         'payment_expires_at',
@@ -79,6 +80,7 @@ class Booking extends Model
             'payment_uploaded_at' => 'datetime',
             'verified_at' => 'datetime',
             'amount' => 'integer',
+            'duration_hours' => 'integer',
         ];
     }
 

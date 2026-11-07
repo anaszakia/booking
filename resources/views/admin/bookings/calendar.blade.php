@@ -104,8 +104,8 @@
                                     @foreach ($dayBookings as $booking)
                                         <span class="booking-event {{ $statusClasses[$booking->status] ?? 'booking-event--other' }}"
                                             data-status="{{ in_array($booking->status, ['canceled', 'cancelled'], true) ? 'cancelled' : $booking->status }}"
-                                            title="{{ substr($booking->booking_time, 0, 5) }} · {{ $booking->customer_name }} · {{ $statusLabels[$booking->status] ?? $booking->status }}">
-                                            <span class="booking-event__time">{{ substr($booking->booking_time, 0, 5) }}</span>
+                                            title="{{ substr($booking->booking_time, 0, 5) }}–{{ \Illuminate\Support\Carbon::parse($booking->booking_time)->addHours($booking->duration_hours)->format('H:i') }} ({{ $booking->duration_hours }} jam) · {{ $booking->customer_name }} · {{ $statusLabels[$booking->status] ?? $booking->status }}">
+                                            <span class="booking-event__time">{{ substr($booking->booking_time, 0, 5) }} ({{ $booking->duration_hours }}j)</span>
                                             <span class="booking-event__name">{{ $booking->customer_name }}</span>
                                         </span>
                                     @endforeach
@@ -296,7 +296,7 @@
                     );
                     const paymentLabels = { cash: 'Tunai', qris: 'QRIS', bank_transfer: 'Transfer bank' };
                     const details = [
-                        `${booking.time} · ${booking.court} · ${booking.venue}`,
+                        `${booking.time}–${booking.endTime} (${booking.durationHours} jam) · ${booking.court} · ${booking.venue}`,
                         booking.source === 'staff' ? 'Booking oleh staf' : 'Booking website',
                     ];
                     if (booking.paymentMethod) details.push(paymentLabels[booking.paymentMethod] || booking.paymentMethod);

@@ -64,6 +64,45 @@ class BookingPaymentTest extends TestCase
         ])->assertSessionHasErrors('booking_time');
     }
 
+    public function test_multi_hour_booking_charges_by_duration_and_rejects_overlaps(): void
+    {
+        [$venue, $court] = $this->makeBookableCourt();
+        $bookingDate = now()->addDays(2)->toDateString();
+        $bookingData = [
+            'court_ulid' => $court->ulid,
+            'booking_date' => $bookingDate,
+            'name' => 'Pelanggan Uji',
+            'phone' => '08123456789',
+        ];
+
+        $this->post(route('booking.store'), $bookingData + [
+            'booking_time' => '10:00',
+            'duration_hours' => 2,
+        ])->assertRedirect();
+
+        $firstBooking = Booking::query()->firstOrFail();
+        $this->assertSame(2, $firstBooking->duration_hours);
+        $this->assertSame(500000, $firstBooking->amount);
+
+        $this->from(route('home'))->post(route('booking.store'), $bookingData + [
+            'booking_time' => '11:30',
+            'duration_hours' => 1,
+        ])->assertSessionHasErrors('booking_time');
+
+        $this->post(route('booking.store'), $bookingData + [
+            'booking_time' => '12:00',
+            'duration_hours' => 2,
+        ])->assertRedirect();
+
+        $secondBooking = Booking::query()->where('booking_time', '12:00')->firstOrFail();
+        $this->assertSame(500000, $secondBooking->amount);
+
+        $this->from(route('home'))->post(route('booking.store'), $bookingData + [
+            'booking_time' => '21:00',
+            'duration_hours' => 2,
+        ])->assertSessionHasErrors('booking_time');
+    }
+
     public function test_staff_can_create_an_onsite_paid_booking_and_confirm_it(): void
     {
         [, $court] = $this->makeBookableCourt();
@@ -349,6 +388,7 @@ class BookingPaymentTest extends TestCase
                 'courtName' => $court->name,
                 'date' => $bookingDate,
                 'time' => '09:00',
+                'durationHours' => 1,
                 'status' => 'pending_verification',
             ])
             ->assertDontSee('Private Customer')

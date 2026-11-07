@@ -20,7 +20,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BookingController extends Controller
 {
-    private const BOOKING_SLOTS = ['07:00', '09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00'];
+    private const OPENING_MINUTE = 7 * 60;
+
+    private const CLOSING_MINUTE = 22 * 60;
 
     public function __construct(private readonly MinioService $minio) {}
 
@@ -45,12 +47,13 @@ class BookingController extends Controller
             ->whereDate('booking_date', '<=', $data['to'])
             ->orderBy('booking_date')
             ->orderBy('booking_time')
-            ->get(['court_id', 'booking_date', 'booking_time', 'status'])
+            ->get(['court_id', 'booking_date', 'booking_time', 'duration_hours', 'status'])
             ->map(fn (Booking $booking) => [
                 'court' => $booking->court->ulid,
                 'courtName' => $booking->court->name,
                 'date' => $booking->booking_date->toDateString(),
                 'time' => substr($booking->booking_time, 0, 5),
+                'durationHours' => $booking->duration_hours,
                 'status' => $booking->status,
             ])
             ->values();
@@ -60,15 +63,18 @@ class BookingController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $request->merge(['duration_hours' => $request->input('duration_hours', 1)]);
         $data = $request->validate([
             'court_ulid' => ['required', 'string', 'size:26'],
             'booking_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
-            'booking_time' => ['required', 'in:'.implode(',', self::BOOKING_SLOTS)],
+            'booking_time' => ['required', 'date_format:H:i'],
+            'duration_hours' => ['required', 'integer', 'min:1', 'max:15'],
             'name' => ['required', 'string', 'max:120'],
             'phone' => ['required', 'string', 'max:32'],
             'email' => ['nullable', 'email', 'max:254'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
+        $this->validateBookingWindow($data);
         if (now()->parse($data['booking_date'].' '.$data['booking_time'])->lte(now())) {
             throw ValidationException::withMessages(['booking_time' => 'Jam booking harus masih akan datang. Silakan pilih slot lain.']);
         }
@@ -92,10 +98,12 @@ class BookingController extends Controller
 
     public function storeStaffBooking(Request $request): RedirectResponse
     {
+        $request->merge(['duration_hours' => $request->input('duration_hours', 1)]);
         $data = $request->validate([
             'court_ulid' => ['required', 'string', 'size:26'],
             'booking_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
-            'booking_time' => ['required', 'in:'.implode(',', self::BOOKING_SLOTS)],
+            'booking_time' => ['required', 'date_format:H:i'],
+            'duration_hours' => ['required', 'integer', 'min:1', 'max:15'],
             'name' => ['required', 'string', 'max:120'],
             'phone' => ['required', 'string', 'max:32'],
             'email' => ['nullable', 'email', 'max:254'],
@@ -103,6 +111,7 @@ class BookingController extends Controller
             'payment_option' => ['required', 'in:online,onsite'],
             'payment_method' => ['required_if:payment_option,onsite', 'nullable', 'in:cash,qris,bank_transfer'],
         ]);
+        $this->validateBookingWindow($data);
         if (now()->parse($data['booking_date'].' '.$data['booking_time'])->lte(now())) {
             throw ValidationException::withMessages(['booking_time' => 'Jam booking harus masih akan datang. Silakan pilih slot lain.']);
         }
@@ -139,25 +148,32 @@ class BookingController extends Controller
             }
 
             $now = now();
+            $this->validateBookingWindow($data);
             if ($now->parse($data['booking_date'].' '.$data['booking_time'])->lte($now)) {
                 throw ValidationException::withMessages(['booking_time' => 'Jam booking harus masih akan datang. Silakan pilih slot lain.']);
             }
             Booking::query()
                 ->where('court_id', $court->id)
-                ->where('booking_date', $data['booking_date'])
-                ->where('booking_time', $data['booking_time'])
+                ->whereDate('booking_date', $data['booking_date'])
                 ->where('status', 'pending_payment')
                 ->where('payment_expires_at', '<=', $now)
                 ->update(['status' => 'expired']);
 
-            $alreadyBooked = Booking::query()
+            $requestedStart = $this->minutesFromTime($data['booking_time']);
+            $requestedEnd = $requestedStart + ((int) $data['duration_hours'] * 60);
+            $overlapsBooking = Booking::query()
                 ->where('court_id', $court->id)
-                ->where('booking_date', $data['booking_date'])
-                ->where('booking_time', $data['booking_time'])
+                ->whereDate('booking_date', $data['booking_date'])
                 ->blocksSlot()
-                ->exists();
-            if ($alreadyBooked) {
-                throw ValidationException::withMessages(['booking_time' => 'Slot ini baru saja dipesan. Silakan pilih jam lain.']);
+                ->get(['booking_time', 'duration_hours'])
+                ->contains(function (Booking $booking) use ($requestedStart, $requestedEnd): bool {
+                    $existingStart = $this->minutesFromTime($booking->booking_time);
+                    $existingEnd = $existingStart + ($booking->duration_hours * 60);
+
+                    return $requestedStart < $existingEnd && $requestedEnd > $existingStart;
+                });
+            if ($overlapsBooking) {
+                throw ValidationException::withMessages(['booking_time' => 'Rentang waktu ini bertabrakan dengan booking lain. Silakan pilih jam atau durasi lain.']);
             }
 
             return Booking::create([
@@ -172,12 +188,32 @@ class BookingController extends Controller
                 'notes' => $data['notes'] ?? null,
                 'booking_date' => $data['booking_date'],
                 'booking_time' => $data['booking_time'],
-                'amount' => $court->price_per_hour,
+                'duration_hours' => (int) $data['duration_hours'],
+                'amount' => $court->price_per_hour * (int) $data['duration_hours'],
                 'status' => $isOnsitePayment ? 'confirmed' : 'pending_payment',
                 'payment_expires_at' => $isOnsitePayment ? null : $now->copy()->addMinutes(30),
                 'verified_at' => $isOnsitePayment ? $now : null,
             ]);
         });
+    }
+
+    private function validateBookingWindow(array $data): void
+    {
+        $startMinute = $this->minutesFromTime($data['booking_time']);
+        $durationHours = (int) $data['duration_hours'];
+
+        if ($startMinute < self::OPENING_MINUTE || $startMinute + ($durationHours * 60) > self::CLOSING_MINUTE) {
+            throw ValidationException::withMessages([
+                'booking_time' => 'Booking hanya tersedia antara pukul 07.00 hingga 22.00. Sesuaikan jam mulai atau durasi.',
+            ]);
+        }
+    }
+
+    private function minutesFromTime(string $time): int
+    {
+        [$hours, $minutes] = array_map('intval', explode(':', substr($time, 0, 5)));
+
+        return ($hours * 60) + $minutes;
     }
 
     public function payment(Booking $booking): View
@@ -293,6 +329,8 @@ class BookingController extends Controller
         $calendarEvents = $bookings->map(fn (Booking $booking) => [
             'date' => $booking->booking_date->toDateString(),
             'time' => substr($booking->booking_time, 0, 5),
+            'durationHours' => $booking->duration_hours,
+            'endTime' => Carbon::parse($booking->booking_time)->addHours($booking->duration_hours)->format('H:i'),
             'customer' => $booking->customer_name,
             'number' => $booking->booking_number,
             'court' => $booking->court->name,
