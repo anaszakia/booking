@@ -1,9 +1,15 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" style="--venue-primary: {{ $primaryVenue?->primary_color ?? '#245c43' }}; --venue-accent: {{ $primaryVenue?->accent_color ?? '#d7f36a' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0b110e">
+    @if ($primaryVenue?->logo_path)
+        <link rel="icon" href="{{ minio_url($primaryVenue->logo_path) }}">
+        <link rel="apple-touch-icon" href="{{ minio_url($primaryVenue->logo_path) }}">
+    @else
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon/favicon-32x32.png') }}">
+    @endif
     <title>Upload Bukti Bayar — {{ $primaryVenue?->name ?? 'Rally Padel' }}</title>
     <script>
         (() => {
@@ -16,21 +22,21 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { color-scheme:dark; --page:#0b110e; --surface:#121b16; --raised:#17231b; --text:#f0f3ed; --muted:#91a096; --line:rgba(235,243,234,.11); --accent:#d7f878; --accent-ink:#172019; --shadow:0 20px 60px rgba(0,0,0,.24); }
-        [data-theme="light"] { color-scheme:light; --page:#f5f7f2; --surface:#fff; --raised:#f0f4eb; --text:#17231d; --muted:#748078; --line:rgba(25,49,32,.12); --accent:#245c43; --accent-ink:#fff; --shadow:0 16px 48px rgba(27,52,34,.08); }
+        :root { color-scheme:dark; --page:#0b110e; --surface:#121b16; --raised:#17231b; --text:#f0f3ed; --muted:#91a096; --line:rgba(235,243,234,.11); --brand:var(--venue-primary); --accent:var(--venue-accent); --accent-ink:#172019; --shadow:0 20px 60px rgba(0,0,0,.24); }
+        [data-theme="light"] { color-scheme:light; --page:#f5f7f2; --surface:#fff; --raised:#f0f4eb; --text:#17231d; --muted:#748078; --line:rgba(25,49,32,.12); --brand:var(--venue-primary); --accent:var(--venue-accent); --accent-ink:#172019; --shadow:0 16px 48px rgba(27,52,34,.08); }
         * { box-sizing:border-box; }
-        body { min-width:320px; min-height:100vh; margin:0; background:radial-gradient(ellipse at 75% 0,rgba(86,119,63,.12),transparent 30%),var(--page); color:var(--text); font:14px "DM Sans",sans-serif; -webkit-font-smoothing:antialiased; }
+        body { min-width:320px; min-height:100vh; margin:0; background:radial-gradient(ellipse at 75% 0,color-mix(in srgb,var(--venue-primary) 16%,transparent),transparent 30%),var(--page); color:var(--text); font:14px "DM Sans",sans-serif; -webkit-font-smoothing:antialiased; }
         a { color:inherit; text-decoration:none; }
         button,input { font:inherit; }
         .shell { width:min(1040px,calc(100% - 48px)); margin:0 auto; }
         .site-header { position:sticky; top:10px; z-index:5; display:flex; align-items:center; justify-content:space-between; height:68px; margin:10px auto 0; padding:0 20px; border:1px solid var(--line); border-radius:15px; background:color-mix(in srgb,var(--page) 82%,transparent); backdrop-filter:blur(18px); }
         .brand { display:inline-flex; align-items:center; gap:9px; font:800 22px Manrope,sans-serif; letter-spacing:-1.3px; }
         .brand-logo,.brand-mark { width:30px; height:30px; flex:none; border-radius:9px; object-fit:cover; }
-        .brand-mark { display:grid; place-items:center; background:var(--accent); color:var(--accent-ink); }
+        .brand-mark { display:grid; place-items:center; background:var(--brand); color:#fff; }
         .brand-mark svg { width:18px; }
         .header-actions { display:flex; align-items:center; gap:16px; }
         .back-link { color:var(--muted); font-size:11px; font-weight:700; }
-        .back-link:hover { color:var(--accent); }
+        .back-link:hover { color:var(--brand); }
         .theme-toggle { width:36px; height:36px; display:grid; place-items:center; border:1px solid var(--line); border-radius:50%; background:var(--surface); color:var(--text); cursor:pointer; }
         .theme-toggle svg { width:17px; height:17px; }
         .theme-toggle .sun-icon,[data-theme="light"] .theme-toggle .moon-icon { display:none; }
@@ -64,7 +70,7 @@
         .file-copy strong { display:block; margin-bottom:5px; font-size:11px; }
         .file-copy span { display:block; overflow:hidden; color:var(--muted); font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
         .field-error { margin-top:7px; color:#e58d7b; font-size:11px; }
-        .submit-button { width:100%; min-height:48px; display:inline-flex; align-items:center; justify-content:center; gap:9px; margin-top:24px; padding:13px 17px; border:0; border-radius:9px; background:var(--accent); color:var(--accent-ink); font-size:12px; font-weight:800; cursor:pointer; transition:transform .2s,filter .2s; }
+        .submit-button { width:100%; min-height:48px; display:inline-flex; align-items:center; justify-content:center; gap:9px; margin-top:24px; padding:13px 17px; border:0; border-radius:9px; background:var(--brand); color:#fff; font-size:12px; font-weight:800; cursor:pointer; transition:transform .2s,filter .2s; }
         .submit-button:hover { transform:translateY(-2px); filter:brightness(1.05); }
         .submit-button:disabled { opacity:.65; cursor:wait; transform:none; }
         .submit-button svg { width:16px; }

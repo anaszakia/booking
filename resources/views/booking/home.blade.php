@@ -1,9 +1,15 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" style="--venue-primary: {{ $primaryVenue?->primary_color ?? '#245c43' }}; --venue-accent: {{ $primaryVenue?->accent_color ?? '#d7f36a' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0b110e">
+    @if ($primaryVenue?->logo_path)
+        <link rel="icon" href="{{ minio_url($primaryVenue->logo_path) }}">
+        <link rel="apple-touch-icon" href="{{ minio_url($primaryVenue->logo_path) }}">
+    @else
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon/favicon-32x32.png') }}">
+    @endif
     <title>{{ $primaryVenue?->name ?? 'Rally Padel' }} — Booking Lapangan Padel</title>
     <script>
         (() => {
@@ -22,8 +28,10 @@
             color-scheme: light;
             --ink: #17231d;
             --muted: #78827b;
-            --green: #245c43;
-            --lime: #d7f36a;
+            --venue-primary: #245c43;
+            --venue-accent: #d7f36a;
+            --green: var(--venue-primary);
+            --lime: var(--venue-accent);
             --paper: #f7f8f4;
             --line: #e7eae3;
         }
@@ -43,11 +51,17 @@
         .header-actions { display: flex; align-items: center; gap: 22px; font-size: 13px; font-weight: 700; }
         .login-link { color: #38463d; }
         .button { display: inline-flex; justify-content: center; align-items: center; gap: 9px; border: 0; border-radius: 9px; padding: 13px 19px; background: var(--green); color: #fff; font-weight: 700; cursor: pointer; transition: background .2s, transform .2s; }
-        .button:hover { background: #194a34; transform: translateY(-1px); }
+        .button:hover { background: color-mix(in srgb, var(--green) 85%, black); transform: translateY(-1px); }
         .button:disabled { opacity: .58; cursor: not-allowed; transform: none; }
         .button svg { width: 16px; }
         .hero { position: relative; min-height: 490px; overflow: hidden; display: flex; align-items: center; border-radius: 18px; background: #1c382c; color: white; }
-        .hero::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(13, 30, 22, .9) 0%, rgba(13, 30, 22, .69) 43%, rgba(13, 30, 22, .12) 100%), url("https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=2000&q=85") center 52% / cover; }
+        .hero::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(13, 30, 22, .9) 0%, rgba(13, 30, 22, .69) 43%, rgba(13, 30, 22, .12) 100%); }
+        .hero-background { position: absolute; z-index: 0; inset: 0; overflow: hidden; }
+        .hero-background img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 52%; opacity: 0; filter: saturate(.72); transform: translateX(var(--hero-shift, 0px)) scale(1.03); transition: opacity .35s ease, transform .25s ease-out; }
+        .hero-background img.is-active { opacity: 1; }
+        .hero-slide-indicators { position: absolute; right: 24px; bottom: 24px; z-index: 3; display: flex; gap: 7px; }
+        .hero-slide-indicator { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 20px; background: rgba(255,255,255,.55); cursor: pointer; transition: width .25s, background .25s; }
+        .hero-slide-indicator[aria-pressed="true"] { width: 23px; background: var(--lime); }
         .hero-content { position: relative; z-index: 1; width: 100%; padding: 68px 7.3% 96px; }
         .eyebrow { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; color: var(--lime); font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; }
         .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 4px rgba(215, 243, 106, .18); }
@@ -65,6 +79,23 @@
         .field-copy label { color: #89918b; font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
         .field-copy input, .field-copy select { width: 100%; padding: 0; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 13px; font-weight: 700; }
         .field-copy select { cursor: pointer; }
+        .location-picker { position: relative; width: 100%; }
+        .location-select-native { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+        .location-picker-trigger { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 0; border: 0; background: transparent; color: var(--ink); text-align: left; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .location-picker-trigger:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; border-radius: 3px; }
+        .location-picker-trigger svg { width: 15px; flex: 0 0 auto; transition: transform .18s; }
+        .location-picker.is-open .location-picker-trigger svg { transform: rotate(180deg); }
+        .location-picker-menu { position: absolute; top: calc(100% + 12px); left: -12px; z-index: 20; display: none; width: min(320px, calc(100vw - 48px)); padding: 9px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: 0 16px 38px rgba(0,0,0,.24); }
+        .search-panel > .search-field:last-of-type .location-picker-menu { right: -12px; left: auto; }
+        .location-picker.is-open .location-picker-menu { display: block; }
+        .location-picker-search { width: 100%; padding: 10px 11px; border: 1px solid var(--line); border-radius: 8px; outline: 0; background: var(--paper); color: var(--ink); font-size: 12px; }
+        .location-picker-search::placeholder { color: var(--muted); }
+        .location-picker-search:focus { border-color: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--venue-primary) 12%, transparent); }
+        .location-picker-options { display: grid; gap: 3px; max-height: 220px; overflow-y: auto; margin-top: 7px; }
+        .location-picker-option { padding: 9px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ink); text-align: left; font-size: 12px; cursor: pointer; }
+        .location-picker-option[hidden] { display: none; }
+        .location-picker-option:hover, .location-picker-option[aria-selected="true"] { background: color-mix(in srgb, var(--venue-accent) 15%, var(--surface)); color: var(--ink); }
+        .location-picker-empty { display: none; padding: 10px; color: var(--muted); font-size: 11px; }
         .search-button { min-height: 52px; margin-left: 10px; white-space: nowrap; }
         .section { padding: 86px 0 28px; }
         .section-heading { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 27px; }
@@ -129,7 +160,7 @@
             .header-actions { gap: 13px; font-size: 11px; }
             .header-actions .button { padding: 10px 12px; }
             .hero { min-height: 440px; border-radius: 13px; }
-            .hero::before { background-image: linear-gradient(90deg, rgba(13, 30, 22, .88), rgba(13, 30, 22, .34)), url("https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=1000&q=80"); }
+            .hero::before { background-image: linear-gradient(90deg, rgba(13, 30, 22, .88), rgba(13, 30, 22, .34)); }
             .hero-content { padding: 54px 25px 85px; }
             h1 { max-width: 380px; font-size: 46px; letter-spacing: -2.5px; }
             .hero-copy { max-width: 320px; font-size: 13px; }
@@ -156,8 +187,8 @@
         }
 
         :root {
-            --green: #164b36;
-            --lime: #d9f76b;
+            --green: var(--venue-primary);
+            --lime: var(--venue-accent);
             --paper: #f5f7f2;
         }
         body {
@@ -219,11 +250,11 @@
         }
         .hero::before {
             background-image:
-                linear-gradient(90deg, rgba(10,30,20,.91) 0%, rgba(13,37,26,.76) 42%, rgba(13,37,26,.12) 100%),
-                url("https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=2000&q=85");
-            background-position: calc(50% + var(--hero-shift, 0px)) 52%;
-            transition: background-position .25s ease-out;
+                linear-gradient(90deg, rgba(10,30,20,.91) 0%, rgba(13,37,26,.76) 42%, rgba(13,37,26,.12) 100%);
         }
+        .hero::before { z-index: 1; }
+        .hero-content { z-index: 2; }
+        .hero-slide-indicators { right: 28px; bottom: 22px; }
         .hero::after {
             position: absolute;
             top: 11%;
@@ -379,7 +410,7 @@
             .header-actions { gap: 11px; }
             .header-actions .button { padding: 10px 12px; }
             .hero { min-height: 440px; margin-top: 12px; border-radius: 19px; }
-            .hero::before { background-image: linear-gradient(90deg, rgba(10,30,20,.9), rgba(13,37,26,.48)), url("https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=1000&q=80"); }
+            .hero::before { background-image: linear-gradient(90deg, rgba(10,30,20,.9), rgba(13,37,26,.48)); }
             .hero::after { top: 22%; right: -17%; width: 70%; height: 64%; opacity: .48; }
             .hero-content { padding: 48px 25px 85px; }
             h1 { font-size: 48px; letter-spacing: -3px; }
@@ -403,8 +434,8 @@
             color-scheme: dark;
             --ink: #f0f3ed;
             --muted: #9aa79d;
-            --green: #cbf36a;
-            --lime: #d7f878;
+            --green: var(--venue-primary);
+            --lime: var(--venue-accent);
             --paper: #0b110e;
             --line: rgba(226,237,222,.12);
             --surface: #121b16;
@@ -440,7 +471,7 @@
         .brand-mark {
             background: var(--lime);
             color: #122018;
-            box-shadow: 0 0 22px rgba(215,248,120,.2);
+            box-shadow: 0 0 22px color-mix(in srgb, var(--venue-accent) 20%, transparent);
         }
         .nav-links { color: #b1bdb3; }
         .nav-links a:hover, .login-link:hover { color: var(--lime); }
@@ -448,12 +479,12 @@
         .button {
             background: var(--lime);
             color: #142018;
-            box-shadow: 0 0 0 rgba(215,248,120,0);
+            box-shadow: 0 0 0 color-mix(in srgb, var(--venue-accent) 0%, transparent);
         }
         .button:hover {
-            background: #e4ff91;
+            background: color-mix(in srgb, var(--venue-accent) 85%, white);
             color: #142018;
-            box-shadow: 0 8px 26px rgba(215,248,120,.16);
+            box-shadow: 0 8px 26px color-mix(in srgb, var(--venue-accent) 16%, transparent);
         }
         .hero {
             min-height: 570px;
@@ -466,29 +497,28 @@
         .hero::before {
             background-image:
                 linear-gradient(90deg, rgba(7,15,10,.94) 0%, rgba(8,18,12,.85) 35%, rgba(8,18,12,.35) 70%, rgba(8,18,12,.18) 100%),
-                linear-gradient(0deg, rgba(8,15,10,.45), transparent 42%),
-                url("https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=2000&q=85");
-            background-position: calc(50% + var(--hero-shift, 0px)) center;
-            filter: saturate(.72);
+                linear-gradient(0deg, rgba(8,15,10,.45), transparent 42%);
         }
+        .hero::after { z-index: 1; }
+        .hero-side-card, .hero-note { z-index: 2; }
         .hero::after {
             top: 9%;
             right: 7%;
             width: 35%;
             height: 82%;
-            border: 1px solid rgba(215,248,120,.35);
+            border: 1px solid color-mix(in srgb, var(--venue-accent) 35%, transparent);
             border-radius: 16px;
             background:
-                linear-gradient(90deg, transparent calc(50% - .5px), rgba(215,248,120,.28) calc(50% - .5px), rgba(215,248,120,.28) calc(50% + .5px), transparent calc(50% + .5px)),
-                linear-gradient(0deg, transparent calc(50% - .5px), rgba(215,248,120,.25) calc(50% - .5px), rgba(215,248,120,.25) calc(50% + .5px), transparent calc(50% + .5px));
-            box-shadow: inset 0 0 0 25px rgba(215,248,120,.045), 0 0 70px rgba(215,248,120,.07);
+                linear-gradient(90deg, transparent calc(50% - .5px), color-mix(in srgb, var(--venue-accent) 28%, transparent) calc(50% - .5px), color-mix(in srgb, var(--venue-accent) 28%, transparent) calc(50% + .5px), transparent calc(50% + .5px)),
+                linear-gradient(0deg, transparent calc(50% - .5px), color-mix(in srgb, var(--venue-accent) 25%, transparent) calc(50% - .5px), color-mix(in srgb, var(--venue-accent) 25%, transparent) calc(50% + .5px), transparent calc(50% + .5px));
+            box-shadow: inset 0 0 0 25px color-mix(in srgb, var(--venue-accent) 5%, transparent), 0 0 70px color-mix(in srgb, var(--venue-accent) 7%, transparent);
             opacity: .72;
             transform: perspective(800px) rotateY(-16deg);
             mask-image: linear-gradient(90deg, transparent, #000 32%);
         }
         .hero-content { padding: 66px 7.3% 96px; }
         .eyebrow {
-            border-color: rgba(215,248,120,.24);
+            border-color: color-mix(in srgb, var(--venue-accent) 24%, transparent);
             background: rgba(10,21,14,.62);
             color: var(--lime);
         }
@@ -533,9 +563,9 @@
             align-items: center;
             gap: 7px;
             padding: 6px 9px;
-            border: 1px solid rgba(215,248,120,.2);
+            border: 1px solid color-mix(in srgb, var(--venue-accent) 20%, transparent);
             border-radius: 99px;
-            background: rgba(215,248,120,.08);
+            background: color-mix(in srgb, var(--venue-accent) 8%, transparent);
             color: var(--lime);
             font-size: 9px;
             font-weight: 700;
@@ -562,7 +592,7 @@
         }
         .search-field { border-color: rgba(255,255,255,.1); }
         .search-field svg { color: var(--lime); }
-        .search-field:focus-within { background: rgba(215,248,120,.06); }
+        .search-field:focus-within { background: color-mix(in srgb, var(--venue-accent) 6%, transparent); }
         .field-copy label { color: #89978c; }
         .field-copy input, .field-copy select { color: #eff3ed; }
         .field-copy select option { background: #18231b; color: #f2f5ef; }
@@ -574,7 +604,7 @@
         .filter-chip { border-color: rgba(255,255,255,.13); background: rgba(255,255,255,.025); color: #aab5ab; }
         .filter-chip.active, .filter-chip:hover { border-color: var(--lime); background: var(--lime); color: #172019; }
         .venue-card { border-color: rgba(255,255,255,.1); background: #121b16; box-shadow: 0 12px 35px rgba(0,0,0,.18); }
-        .venue-card:hover { border-color: rgba(215,248,120,.42); box-shadow: 0 22px 48px rgba(0,0,0,.35); }
+        .venue-card:hover { border-color: color-mix(in srgb, var(--venue-accent) 42%, transparent); box-shadow: 0 22px 48px rgba(0,0,0,.35); }
         .venue-image { background: #24352a; }
         .venue-image::after {
             position: absolute;
@@ -591,7 +621,7 @@
         .venue-divider { background: rgba(255,255,255,.1); }
         .price { color: #8e9b91; }
         .price strong { color: var(--lime); }
-        .small-button { background: rgba(215,248,120,.1); color: var(--lime); }
+        .small-button { background: color-mix(in srgb, var(--venue-accent) 10%, transparent); color: var(--lime); }
         .small-button:hover { background: var(--lime); color: #172019; }
         .empty-results { border-color: rgba(255,255,255,.18); color: #a8b2a9; }
         .benefits {
@@ -603,20 +633,30 @@
             border-radius: 17px;
             background: linear-gradient(120deg, rgba(23,34,26,.94), rgba(17,26,20,.94));
         }
-        .benefit-icon { background: rgba(215,248,120,.1); color: var(--lime); }
+        .benefit-icon { background: color-mix(in srgb, var(--venue-accent) 10%, transparent); color: var(--lime); }
         .benefit:hover .benefit-icon { background: var(--lime); color: #172019; }
         .benefit h3 { font-size: 12px; }
         .benefit p { color: #99a59b; }
         .cta {
-            border-color: rgba(215,248,120,.22);
-            background: linear-gradient(112deg, #c8ef62, #daf781 58%, #bfe754);
+            border-color: color-mix(in srgb, var(--venue-accent) 22%, transparent);
+            background: linear-gradient(
+                112deg,
+                color-mix(in srgb, var(--venue-primary) 82%, white),
+                color-mix(in srgb, var(--venue-accent) 82%, white) 58%,
+                color-mix(in srgb, var(--venue-accent) 72%, white)
+            );
             color: #172019;
         }
         .cta h2 { color: #172019; }
         .cta p { color: rgba(23,32,25,.72); }
         .cta .button { border: 1px solid rgba(20,32,23,.18); background: #172019; color: #f3f6ef; }
         .cta .button:hover { background: #263a2a; color: #fff; }
-        .cta::after { border-color: rgba(23,32,25,.16); box-shadow: 0 0 0 22px rgba(23,32,25,.05), 0 0 0 44px rgba(23,32,25,.035); }
+        .cta::after {
+            border-color: color-mix(in srgb, var(--venue-primary) 24%, transparent);
+            box-shadow:
+                0 0 0 22px color-mix(in srgb, var(--venue-accent) 12%, transparent),
+                0 0 0 44px color-mix(in srgb, var(--venue-primary) 8%, transparent);
+        }
         footer { padding: 58px 0 0; border-color: rgba(255,255,255,.1); }
         .footer-grid {
             display: grid;
@@ -626,7 +666,7 @@
         }
         .footer-about { max-width: 240px; }
         .footer-about .footer-brand { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 15px; font-size: 24px; }
-        .footer-brand-logo { width: 30px; height: 30px; border-radius: 8px; object-fit: cover; }
+        .footer-brand-logo { width: 90px; height: 90px; border-radius: 12px; object-fit: contain; }
         .footer-about p { color: #8d9a8f; font-size: 12px; line-height: 1.8; }
         .footer-heading {
             margin: 4px 0 17px;
@@ -706,7 +746,7 @@
         .footer-inner { color: #77847a; }
         .footer-brand { color: #f0f3ed; }
         .footer-brand span { color: var(--lime) !important; }
-        .toast { border-color: rgba(215,248,120,.2); background: #1b2b1f; color: #f4f7f1; }
+        .toast { border-color: color-mix(in srgb, var(--venue-accent) 20%, transparent); background: #1b2b1f; color: #f4f7f1; }
         @keyframes float-card {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-7px); }
@@ -721,7 +761,7 @@
             body { background: #0b110e; }
             .site-header { background: rgba(13,20,16,.83); }
             .hero { min-height: 560px; }
-            .hero::before { background-image: linear-gradient(90deg, rgba(7,15,10,.92), rgba(8,18,12,.5)), linear-gradient(0deg, rgba(8,15,10,.48), transparent 65%), url("https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=1000&q=80"); }
+            .hero::before { background-image: linear-gradient(90deg, rgba(7,15,10,.92), rgba(8,18,12,.5)), linear-gradient(0deg, rgba(8,15,10,.48), transparent 65%); }
             .hero::after { top: 25%; right: -17%; width: 70%; height: 55%; }
             .hero-content { padding: 48px 25px 145px; }
             h1 { font-size: 55px; letter-spacing: -3.8px; }
@@ -749,10 +789,11 @@
             color-scheme: light;
             --ink: #17231d;
             --muted: #78827b;
-            --green: #245c43;
-            --lime: #d7f36a;
+            --green: var(--venue-primary);
+            --lime: var(--venue-accent);
             --paper: #f7f8f4;
             --line: #e7eae3;
+            --surface: #fff;
         }
         [data-theme="light"] body {
             color: var(--ink);
@@ -780,9 +821,9 @@
         [data-theme="light"] .login-link:hover { color: var(--green); }
         [data-theme="light"] .login-link { color: #38463d; }
         [data-theme="light"] .button { background: var(--green); color: #fff; }
-        [data-theme="light"] .button:hover { background: #194a34; color: #fff; }
+        [data-theme="light"] .button:hover { background: color-mix(in srgb, var(--green) 85%, black); color: #fff; }
         [data-theme="light"] .hero .button { background: var(--lime); color: #142018; }
-        [data-theme="light"] .hero .button:hover { background: #e4ff91; color: #142018; }
+        [data-theme="light"] .hero .button:hover { background: color-mix(in srgb, var(--lime) 85%, white); color: #142018; }
         [data-theme="light"] .hero-side-card {
             border-color: rgba(255,255,255,.24);
             background: rgba(12,21,15,.62);
@@ -833,7 +874,7 @@
         [data-theme="light"] .price { color: #7b857d; }
         [data-theme="light"] .price strong { color: var(--ink); }
         [data-theme="light"] .small-button { background: var(--green); color: #fff; }
-        [data-theme="light"] .small-button:hover { background: #194a34; color: #fff; }
+        [data-theme="light"] .small-button:hover { background: color-mix(in srgb, var(--green) 85%, black); color: #fff; }
         [data-theme="light"] .empty-results { border-color: #dce3da; color: var(--muted); }
         [data-theme="light"] .benefits {
             border-color: #e1e9db;
@@ -843,17 +884,24 @@
         [data-theme="light"] .benefit:hover .benefit-icon { background: var(--lime); color: var(--green); }
         [data-theme="light"] .benefit p { color: #7b857d; }
         [data-theme="light"] .cta {
-            border-color: #e1e9db;
-            background: linear-gradient(110deg, #eaf1e4 0%, #f1f5e9 57%, #e0edce 100%);
+            border-color: color-mix(in srgb, var(--venue-accent) 28%, #e1e9db);
+            background: linear-gradient(
+                110deg,
+                color-mix(in srgb, var(--venue-primary) 12%, white),
+                color-mix(in srgb, var(--venue-accent) 18%, white) 57%,
+                color-mix(in srgb, var(--venue-accent) 24%, white)
+            );
             color: var(--ink);
         }
         [data-theme="light"] .cta h2 { color: var(--ink); }
         [data-theme="light"] .cta p { color: #6e7c70; }
         [data-theme="light"] .cta .button { border: 0; background: var(--green); color: #fff; }
-        [data-theme="light"] .cta .button:hover { background: #194a34; color: #fff; }
+        [data-theme="light"] .cta .button:hover { background: color-mix(in srgb, var(--green) 85%, black); color: #fff; }
         [data-theme="light"] .cta::after {
-            border-color: rgba(65,105,66,.12);
-            box-shadow: 0 0 0 22px rgba(65,105,66,.035), 0 0 0 44px rgba(65,105,66,.025);
+            border-color: color-mix(in srgb, var(--venue-primary) 22%, transparent);
+            box-shadow:
+                0 0 0 22px color-mix(in srgb, var(--venue-accent) 10%, transparent),
+                0 0 0 44px color-mix(in srgb, var(--venue-primary) 7%, transparent);
         }
         [data-theme="light"] footer { border-color: rgba(255,255,255,.12); }
         [data-theme="light"] .footer-map { border-color: rgba(255,255,255,.13); }
@@ -930,9 +978,9 @@
             gap: 12px;
             margin-bottom: 20px;
             padding: 13px 15px;
-            border: 1px solid rgba(215,248,120,.2);
+            border: 1px solid color-mix(in srgb, var(--venue-accent) 20%, transparent);
             border-radius: 11px;
-            background: rgba(215,248,120,.06);
+            background: color-mix(in srgb, var(--venue-accent) 6%, transparent);
             font-size: 11px;
         }
         .booking-summary strong { color: var(--lime); }
@@ -973,7 +1021,7 @@
             font-size: 12px;
             transition: border-color .2s, box-shadow .2s;
         }
-        .booking-field input:focus, .booking-field textarea:focus { border-color: var(--lime); box-shadow: 0 0 0 3px rgba(215,248,120,.1); }
+        .booking-field input:focus, .booking-field textarea:focus { border-color: var(--lime); box-shadow: 0 0 0 3px color-mix(in srgb, var(--venue-accent) 10%, transparent); }
         .booking-field textarea { min-height: 78px; resize: vertical; }
         .booking-field input::placeholder, .booking-field textarea::placeholder { color: #718075; }
         .booking-note { margin: 14px 0 0; color: #829085; font-size: 10px; line-height: 1.6; }
@@ -996,7 +1044,7 @@
         [data-theme="light"] .booking-time-heading span,
         [data-theme="light"] .booking-availability { color: #68746c; }
         [data-theme="light"] .booking-time-slot { border-color: #dfe6dc; background: #f8faf6; color: #344239; }
-        [data-theme="light"] .booking-time-slot.selected { border-color: #245c43; background: #245c43; color: #fff; }
+        [data-theme="light"] .booking-time-slot.selected { border-color: var(--green); background: var(--green); color: #fff; }
         [data-theme="light"] .booking-time-slot:disabled { border-color: #e5e9e3; background: #f1f3ef; color: #9aa39c; }
         [data-theme="light"] .booking-availability.error { color: #ae4c37; }
         @keyframes dialog-in {
@@ -1017,10 +1065,10 @@
         html[data-theme="dark"] footer .footer-brand,
         html[data-theme="dark"] footer .footer-brand span { color: #111 !important; }
         html[data-theme="dark"] footer .footer-address svg,
-        html[data-theme="dark"] footer .map-caption a { color: #245c43; }
+        html[data-theme="dark"] footer .map-caption a { color: var(--green); }
         [data-theme="dark"] footer .map-caption { background: rgba(255,255,255,.9); }
-        html[data-theme="dark"] footer .footer-social:hover { color: #245c43; }
-        html[data-theme="dark"] footer .social-icon { border-color: #e1e8dd; color: #245c43; }
+        html[data-theme="dark"] footer .footer-social:hover { color: var(--green); }
+        html[data-theme="dark"] footer .social-icon { border-color: #e1e8dd; color: var(--green); }
         html[data-theme="dark"] footer .footer-bottom { border-color: #e7eae3; }
         html[data-theme="light"] footer {
             border-color: rgba(255,255,255,.12);
@@ -1066,6 +1114,9 @@
             .hero-side-top { margin-bottom: 15px; }
             .hero-note { left: 17px; bottom: 60px; }
         }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-background img { transition: none; }
+        }
     </style>
 </head>
 <body>
@@ -1084,8 +1135,6 @@
             <a href="#lapangan">Cari lapangan</a>
             <a href="{{ route('schedule') }}">Lihat jadwal</a>
             <a href="{{ route('booking.upload-form') }}">Upload bukti bayar</a>
-            <a href="#keunggulan">Cara kerja</a>
-            <a href="#tentang">Tentang kami</a>
         </nav>
         <div class="header-actions">
             <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Aktifkan mode terang" title="Aktifkan mode terang" aria-pressed="true">
@@ -1107,6 +1156,15 @@
 
     <main>
         <section class="shell hero" aria-labelledby="hero-title">
+            <div class="hero-background" aria-hidden="true">
+                @if ($primaryVenue?->heroImages->isNotEmpty())
+                    @foreach ($primaryVenue->heroImages as $index => $heroImage)
+                        <img src="{{ minio_url($heroImage->image_path) }}" alt="" @class(['is-active' => $index === 0])>
+                    @endforeach
+                @else
+                    <img src="https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=2000&q=85" alt="" class="is-active">
+                @endif
+            </div>
             <div class="hero-content">
                 <div class="eyebrow"><span class="eyebrow-dot"></span> Your next game starts here</div>
                 <h1 id="hero-title">Main padel,<br><span>tanpa ribet.</span></h1>
@@ -1131,19 +1189,42 @@
                 </div>
                 <span>Dipercaya komunitas padel</span>
             </div>
+            @if ($primaryVenue?->heroImages->count() > 1)
+                <div class="hero-slide-indicators" role="group" aria-label="Pilih foto hero">
+                    @foreach ($primaryVenue->heroImages as $index => $heroImage)
+                        <button class="hero-slide-indicator" type="button" aria-label="Tampilkan foto {{ $index + 1 }}" aria-pressed="{{ $index === 0 ? 'true' : 'false' }}" data-slide="{{ $index }}"></button>
+                    @endforeach
+                </div>
+            @endif
         </section>
 
         <form class="shell search-panel" id="search-form">
             <div class="search-field">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg>
                 <div class="field-copy">
-                    <label for="location">Lokasi</label>
-                    <select id="location" name="location">
+                    <label for="location-picker-trigger">Lokasi</label>
+                    <select class="location-select-native" id="location" name="location" tabindex="-1" aria-hidden="true">
                         <option value="all">Semua lokasi</option>
                         @foreach ($venues as $venue)
-                            <option value="{{ $venue->ulid }}">{{ $venue->address }}</option>
+                            <option value="{{ $venue->ulid }}">{{ $venue->name }}</option>
                         @endforeach
                     </select>
+                    <div class="location-picker" id="location-picker">
+                        <button class="location-picker-trigger" id="location-picker-trigger" type="button" role="combobox" aria-label="Pilih venue" aria-haspopup="listbox" aria-expanded="false" aria-controls="location-picker-options">
+                            <span id="location-picker-value">Semua lokasi</span>
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m7 10 5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                        <div class="location-picker-menu">
+                            <input class="location-picker-search" id="location-picker-search" type="search" placeholder="Cari nama venue..." autocomplete="off" aria-label="Cari nama venue">
+                            <div class="location-picker-options" id="location-picker-options" role="listbox" aria-label="Daftar venue">
+                                <button class="location-picker-option" type="button" role="option" data-value="all" aria-selected="true">Semua lokasi</button>
+                                @foreach ($venues as $venue)
+                                    <button class="location-picker-option" type="button" role="option" data-value="{{ $venue->ulid }}" aria-selected="false">{{ $venue->name }}</button>
+                                @endforeach
+                            </div>
+                            <div class="location-picker-empty" id="location-picker-empty">Venue tidak ditemukan.</div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="search-field">
@@ -1157,12 +1238,28 @@
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
                 <div class="field-copy">
                     <label for="play-time">Waktu</label>
-                    <select id="play-time" name="time">
+                    <select class="location-select-native" id="play-time" name="time" tabindex="-1" aria-hidden="true">
                         <option value="all">Semua waktu</option>
                         <option value="pagi">Pagi · 06.00–11.00</option>
                         <option value="siang">Siang · 11.00–16.00</option>
                         <option value="malam">Malam · 16.00–22.00</option>
                     </select>
+                    <div class="location-picker" id="time-picker">
+                        <button class="location-picker-trigger" id="time-picker-trigger" type="button" role="combobox" aria-label="Pilih waktu bermain" aria-haspopup="listbox" aria-expanded="false" aria-controls="time-picker-options">
+                            <span id="time-picker-value">Semua waktu</span>
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m7 10 5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                        <div class="location-picker-menu">
+                            <input class="location-picker-search" id="time-picker-search" type="search" placeholder="Cari waktu..." autocomplete="off" aria-label="Cari waktu bermain">
+                            <div class="location-picker-options" id="time-picker-options" role="listbox" aria-label="Daftar waktu bermain">
+                                <button class="location-picker-option" type="button" role="option" data-value="all" aria-selected="true">Semua waktu</button>
+                                <button class="location-picker-option" type="button" role="option" data-value="pagi" aria-selected="false">Pagi · 06.00–11.00</button>
+                                <button class="location-picker-option" type="button" role="option" data-value="siang" aria-selected="false">Siang · 11.00–16.00</button>
+                                <button class="location-picker-option" type="button" role="option" data-value="malam" aria-selected="false">Malam · 16.00–22.00</button>
+                            </div>
+                            <div class="location-picker-empty" id="time-picker-empty">Waktu tidak ditemukan.</div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <button class="button search-button" type="submit">
@@ -1195,7 +1292,7 @@
                         </div>
                         <div class="venue-details">
                             <div class="venue-title-row"><h3>{{ $court->name }}</h3></div>
-                            <div class="location"><svg viewBox="0 0 24 24" fill="none"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg> {{ $court->venue?->address ?? 'Alamat venue belum tersedia' }}</div>
+                            <div class="location"><svg viewBox="0 0 24 24" fill="none"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg> {{ $court->venue?->name ?? 'Venue belum tersedia' }}</div>
                             <div class="venue-divider"></div>
                             <div class="venue-bottom">
                                 <span class="price"><strong>Rp{{ number_format($court->price_per_hour, 0, ',', '.') }}</strong> <span>/ jam</span></span>
@@ -1358,6 +1455,80 @@
         const searchForm = document.getElementById('search-form');
         const locationSelect = document.getElementById('location');
         const timeSelect = document.getElementById('play-time');
+        function createSearchablePicker(prefix, select) {
+            const picker = document.getElementById(`${prefix}-picker`);
+            const trigger = document.getElementById(`${prefix}-picker-trigger`);
+            const value = document.getElementById(`${prefix}-picker-value`);
+            const search = document.getElementById(`${prefix}-picker-search`);
+            const options = [...picker.querySelectorAll('.location-picker-option')];
+            const empty = document.getElementById(`${prefix}-picker-empty`);
+
+            function close(returnFocus = false) {
+                picker.classList.remove('is-open');
+                trigger.setAttribute('aria-expanded', 'false');
+                if (returnFocus) trigger.focus();
+            }
+
+            function choose(option, returnFocus = false) {
+                select.value = option.dataset.value;
+                value.textContent = option.textContent.trim();
+                options.forEach((item) => item.setAttribute('aria-selected', String(item === option)));
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+                close(returnFocus);
+            }
+
+            trigger.addEventListener('click', () => {
+                const isOpen = picker.classList.toggle('is-open');
+                trigger.setAttribute('aria-expanded', String(isOpen));
+                if (isOpen) {
+                    search.value = '';
+                    options.forEach((option) => { option.hidden = false; });
+                    empty.style.display = 'none';
+                    search.focus();
+                }
+            });
+
+            search.addEventListener('input', () => {
+                const query = search.value.trim().toLocaleLowerCase('id');
+                let visibleOptions = 0;
+                options.forEach((option) => {
+                    option.hidden = !option.textContent.trim().toLocaleLowerCase('id').includes(query);
+                    if (!option.hidden) visibleOptions += 1;
+                });
+                empty.style.display = visibleOptions ? 'none' : 'block';
+            });
+
+            search.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    close(true);
+                } else if (event.key === 'Enter') {
+                    event.preventDefault();
+                    options.find((option) => !option.hidden)?.click();
+                }
+            });
+
+            options.forEach((option) => option.addEventListener('click', () => choose(option, true)));
+
+            return {
+                picker,
+                choose: (value) => {
+                    const option = options.find((item) => item.dataset.value === value);
+                    if (option) choose(option);
+                },
+            };
+        }
+
+        const locationPicker = createSearchablePicker('location', locationSelect);
+        const timePicker = createSearchablePicker('time', timeSelect);
+        document.addEventListener('click', (event) => {
+            [locationPicker, timePicker].forEach(({ picker }) => {
+                if (!picker.contains(event.target)) {
+                    picker.classList.remove('is-open');
+                    picker.querySelector('[aria-haspopup="listbox"]').setAttribute('aria-expanded', 'false');
+                }
+            });
+        });
         const venueCards = [...document.querySelectorAll('.venue-card')];
         const emptyResults = document.getElementById('empty-results');
         const resultsCaption = document.getElementById('results-caption');
@@ -1617,8 +1788,8 @@
         ) {
             const hour = Number(scheduledSlot.slice(0, 2));
             searchDate.value = scheduledDate;
-            bookingLocation.value = scheduledLocation;
-            bookingTime.value = hour < 11 ? 'pagi' : hour < 16 ? 'siang' : 'malam';
+            locationPicker.choose(scheduledLocation);
+            timePicker.choose(hour < 11 ? 'pagi' : hour < 16 ? 'siang' : 'malam');
             targetBookButton.dataset.selectedSlot = scheduledSlot;
             updateVenues();
             window.setTimeout(() => targetBookButton.click(), 250);
@@ -1726,6 +1897,48 @@
             console.error('Leaflet gagal dimuat; peta lokasi tidak tersedia.');
             mapElement.textContent = 'Peta tidak dapat dimuat. Silakan coba lagi.';
         }
+    </script>
+    <script>
+        (() => {
+            const hero = document.querySelector('.hero');
+            const slides = [...document.querySelectorAll('.hero-background img')];
+            const indicators = [...document.querySelectorAll('.hero-slide-indicator')];
+            if (!hero || slides.length < 2) return;
+
+            const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            let activeIndex = 0;
+            let timer;
+
+            const showSlide = (index) => {
+                activeIndex = (index + slides.length) % slides.length;
+                slides.forEach((slide, slideIndex) => slide.classList.toggle('is-active', slideIndex === activeIndex));
+                indicators.forEach((indicator, slideIndex) => {
+                    indicator.setAttribute('aria-pressed', String(slideIndex === activeIndex));
+                });
+            };
+            const stopAutoplay = () => window.clearInterval(timer);
+            const startAutoplay = () => {
+                stopAutoplay();
+                if (!reducedMotion && !document.hidden) {
+                    timer = window.setInterval(() => showSlide(activeIndex + 1), 5000);
+                }
+            };
+
+            indicators.forEach((indicator, index) => {
+                indicator.addEventListener('click', () => {
+                    showSlide(index);
+                    startAutoplay();
+                });
+            });
+            hero.addEventListener('pointerenter', stopAutoplay);
+            hero.addEventListener('pointerleave', startAutoplay);
+            hero.addEventListener('focusin', stopAutoplay);
+            hero.addEventListener('focusout', (event) => {
+                if (!hero.contains(event.relatedTarget)) startAutoplay();
+            });
+            document.addEventListener('visibilitychange', startAutoplay);
+            startAutoplay();
+        })();
     </script>
 </body>
 </html>

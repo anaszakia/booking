@@ -62,7 +62,7 @@ Route::middleware(['auth:web', 'auth.custom'])->group(function () {
 
 Route::get('/', function () {
     $courts = Court::active()->with(['venue.bankAccounts'])->orderBy('name')->get();
-    $venues = Venue::active()->orderBy('name')->get();
+    $venues = Venue::active()->with('heroImages')->orderBy('name')->get();
     $primaryVenue = $venues->first();
     $venueMapPoints = $venues->map(fn (Venue $venue) => [
         'name' => $venue->name,

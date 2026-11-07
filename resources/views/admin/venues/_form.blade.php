@@ -7,6 +7,7 @@
     .master-form .form-control::placeholder { color: #000 !important; }
     #venue-picker-map { height: 380px; border: 1px solid #dfe5df; border-radius: 12px; z-index: 0; }
     .bank-account-row { background: #f8faf8; }
+    .hero-image-preview { width: 100%; height: 130px; object-fit: cover; }
 </style>
 
 <form class="master-form" action="{{ $venue->exists ? route('venues.update', $venue) : route('venues.store') }}" method="POST" enctype="multipart/form-data">
@@ -30,6 +31,26 @@
                 @error('address') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
             <div class="mb-4">
+                <label class="form-label">Warna tema frontend</label>
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label for="primary_color" class="form-label small">Warna utama</label>
+                        <input id="primary_color" name="primary_color" type="color"
+                            value="{{ old('primary_color', $venue->primary_color ?? '#245c43') }}"
+                            class="form-control form-control-color @error('primary_color') is-invalid @enderror" title="Pilih warna utama">
+                        @error('primary_color') <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-sm-6">
+                        <label for="accent_color" class="form-label small">Warna aksen</label>
+                        <input id="accent_color" name="accent_color" type="color"
+                            value="{{ old('accent_color', $venue->accent_color ?? '#d7f36a') }}"
+                            class="form-control form-control-color @error('accent_color') is-invalid @enderror" title="Pilih warna aksen">
+                        @error('accent_color') <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+                <div class="form-text">Warna utama dipakai untuk elemen brand dan tombol. Warna aksen dipakai untuk highlight dan tombol utama.</div>
+            </div>
+            <div class="mb-4">
                 <label for="logo" class="form-label">Logo venue</label>
                 <input id="logo" name="logo" type="file" accept="image/jpeg,image/png,image/webp"
                     class="form-control @error('logo') is-invalid @enderror">
@@ -38,6 +59,30 @@
                 @if ($venue->logo_path)
                     <div class="mt-3">
                         <img src="{{ minio_url($venue->logo_path) }}" alt="Logo {{ $venue->name }}" width="88" height="88" class="rounded object-fit-contain border p-2">
+                    </div>
+                @endif
+            </div>
+            <div class="mb-4">
+                <label for="hero_images" class="form-label">Foto hero</label>
+                <input id="hero_images" name="hero_images[]" type="file" accept="image/jpeg,image/png,image/webp" multiple
+                    class="form-control @error('hero_images') is-invalid @enderror @error('hero_images.*') is-invalid @enderror">
+                <div class="form-text">Pilih beberapa foto JPG, PNG, atau WebP, maksimal 8 MB per foto dan 10 foto per venue. Jika lebih dari satu foto, gambar akan berganti otomatis di hero halaman depan.</div>
+                @error('hero_images') <div class="text-danger small">{{ $message }}</div> @enderror
+                @error('hero_images.*') <div class="text-danger small">{{ $message }}</div> @enderror
+                @error('delete_hero_images') <div class="text-danger small">{{ $message }}</div> @enderror
+                @if ($venue->exists && $venue->heroImages->isNotEmpty())
+                    <div class="row g-3 mt-1">
+                        @foreach ($venue->heroImages as $heroImage)
+                            <div class="col-sm-6 col-xl-4">
+                                <div class="border rounded p-2 h-100">
+                                    <img src="{{ minio_url($heroImage->image_path) }}" alt="Foto hero {{ $venue->name }} {{ $loop->iteration }}" class="hero-image-preview rounded">
+                                    <label class="form-check mt-2 mb-0">
+                                        <input type="checkbox" name="delete_hero_images[]" value="{{ $heroImage->id }}" class="form-check-input" @checked(in_array($heroImage->id, old('delete_hero_images', [])))>
+                                        <span class="form-check-label">Hapus foto ini</span>
+                                    </label>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
                 @endif
             </div>

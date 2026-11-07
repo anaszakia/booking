@@ -13,6 +13,8 @@ class Venue extends Model
         'name',
         'logo_path',
         'qris_path',
+        'primary_color',
+        'accent_color',
         'address',
         'latitude',
         'longitude',
@@ -43,6 +45,11 @@ class Venue extends Model
     public function bankAccounts(): HasMany
     {
         return $this->hasMany(VenueBankAccount::class);
+    }
+
+    public function heroImages(): HasMany
+    {
+        return $this->hasMany(VenueHeroImage::class)->orderBy('sort_order')->orderBy('id');
     }
 
     public function courts(): HasMany

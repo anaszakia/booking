@@ -1,9 +1,15 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" style="--venue-primary: {{ $primaryVenue?->primary_color ?? '#245c43' }}; --venue-accent: {{ $primaryVenue?->accent_color ?? '#d7f36a' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0b110e">
+    @if ($primaryVenue?->logo_path)
+        <link rel="icon" href="{{ minio_url($primaryVenue->logo_path) }}">
+        <link rel="apple-touch-icon" href="{{ minio_url($primaryVenue->logo_path) }}">
+    @else
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon/favicon-32x32.png') }}">
+    @endif
     <title>Lihat Jadwal — {{ $primaryVenue?->name ?? 'Rally Padel' }}</title>
     <script>
         (() => {
@@ -18,15 +24,16 @@
     <style>
         :root {
             color-scheme: dark;
+            --brand: var(--venue-primary);
+            --accent: var(--venue-accent);
             --page: #0b110e;
             --surface: #121b16;
             --surface-raised: #17231b;
             --text: #f0f3ed;
             --muted: #91a096;
             --line: rgba(235,243,234,.11);
-            --accent: #d7f878;
             --accent-ink: #172019;
-            --available: #c9ef63;
+            --available: var(--venue-accent);
             --booked: #e29278;
             --shadow: 0 20px 60px rgba(0,0,0,.24);
         }
@@ -36,7 +43,7 @@
             min-width: 320px;
             margin: 0;
             background:
-                radial-gradient(ellipse at 75% 0, rgba(86,119,63,.12), transparent 28%),
+                radial-gradient(ellipse at 75% 0, color-mix(in srgb, var(--venue-primary) 16%, transparent), transparent 28%),
                 var(--page);
             color: var(--text);
             font-family: "DM Sans", sans-serif;
@@ -70,15 +77,15 @@
             display: grid;
             place-items: center;
             border-radius: 10px;
-            background: var(--accent);
-            color: var(--accent-ink);
+            background: var(--brand);
+            color: #fff;
         }
         .brand-mark svg { width: 18px; }
         .header-actions { display: flex; align-items: center; gap: 17px; }
         .home-link, .payment-link, .admin-link { color: var(--muted); font-size: 11px; font-weight: 700; transition: color .2s; }
-        .home-link:hover, .payment-link:hover, .admin-link:hover { color: var(--accent); }
+        .home-link:hover, .payment-link:hover, .admin-link:hover { color: var(--brand); }
         .admin-link { display: inline-flex; align-items: center; gap: 7px; color: var(--text); }
-        .admin-link svg { width: 15px; color: var(--accent); }
+        .admin-link svg { width: 15px; color: var(--brand); }
         .theme-toggle {
             width: 36px;
             height: 36px;
@@ -102,9 +109,9 @@
             --text: #17231d;
             --muted: #748078;
             --line: rgba(25,49,32,.12);
-            --accent: #245c43;
-            --accent-ink: #fff;
-            --available: #386e38;
+            --accent: var(--venue-accent);
+            --accent-ink: #172019;
+            --available: var(--venue-primary);
             --booked: #bf684f;
             --shadow: 0 16px 48px rgba(27,52,34,.08);
         }
@@ -112,7 +119,7 @@
         [data-theme="light"] .theme-toggle .moon-icon { display: none; }
         .page-heading { display: flex; justify-content: space-between; align-items: end; gap: 24px; padding: 62px 0 26px; }
         .page-heading-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
-        .payment-action { display: inline-flex; align-items: center; justify-content: center; padding: 10px 13px; border-radius: 9px; background: var(--accent); color: var(--accent-ink); font-size: 10px; font-weight: 700; }
+        .payment-action { display: inline-flex; align-items: center; justify-content: center; padding: 10px 13px; border-radius: 9px; background: var(--brand); color: #fff; font-size: 10px; font-weight: 700; }
         .eyebrow { margin-bottom: 12px; color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: 1.65px; text-transform: uppercase; }
         h1, h2, h3, p { margin-top: 0; }
         h1 { margin-bottom: 10px; font: 800 clamp(34px, 5vw, 52px)/1.08 "Manrope", sans-serif; letter-spacing: -2.7px; }
@@ -200,9 +207,9 @@
         .day-cell.outside { color: var(--muted); opacity: .43; }
         .day-cell:disabled { cursor: default; }
         .day-number { display: inline-grid; width: 25px; height: 25px; place-items: center; border-radius: 50%; font-size: 11px; font-weight: 600; }
-        .day-cell.today .day-number { background: var(--accent); color: var(--accent-ink); }
-        .day-cell.selected .day-number { color: var(--accent); font-weight: 800; }
-        .day-cell.today.selected .day-number { background: var(--accent); color: var(--accent-ink); }
+        .day-cell.today .day-number { background: var(--brand); color: #fff; }
+        .day-cell.selected .day-number { color: var(--brand); font-weight: 800; }
+        .day-cell.today.selected .day-number { background: var(--brand); color: #fff; }
         .day-count { display: block; margin-top: 7px; color: var(--available); font-size: 8px; font-weight: 700; line-height: 1.3; }
         .day-dots { display: flex; gap: 3px; margin-top: 6px; }
         .day-dots span { width: 5px; height: 5px; border-radius: 50%; background: var(--available); }
@@ -239,8 +246,8 @@
             padding: 7px 9px;
             border: 0;
             border-radius: 7px;
-            background: var(--accent);
-            color: var(--accent-ink);
+            background: var(--brand);
+            color: #fff;
             font-size: 9px;
             font-weight: 700;
             cursor: pointer;
@@ -252,7 +259,7 @@
         .empty-slots { padding: 34px 20px; color: var(--muted); font-size: 11px; line-height: 1.6; text-align: center; }
         .summary-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; padding: 0 0 62px; }
         .summary-card { padding: 17px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface); }
-        .summary-value { display: block; margin-bottom: 6px; color: var(--accent); font: 800 21px "Manrope", sans-serif; }
+        .summary-value { display: block; margin-bottom: 6px; color: var(--brand); font: 800 21px "Manrope", sans-serif; }
         .summary-label { color: var(--muted); font-size: 9px; }
         footer { padding: 18px 0 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
         .footer-row { display: flex; justify-content: space-between; gap: 14px; }

@@ -4,6 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0b110e">
+    @if ($booking->venue->logo_path)
+        <link rel="icon" href="{{ minio_url($booking->venue->logo_path) }}">
+        <link rel="apple-touch-icon" href="{{ minio_url($booking->venue->logo_path) }}">
+    @else
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon/favicon-32x32.png') }}">
+    @endif
     <title>Pembayaran {{ $booking->booking_number }} — {{ $booking->venue->name }}</title>
     <script>
         (() => {
