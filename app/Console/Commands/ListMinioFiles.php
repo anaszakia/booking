@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
-class TestMinioFiles extends Command
+class ListMinioFiles extends Command
 {
     protected $signature = 'minio:list-files';
     protected $description = 'List all files in MinIO bucket';
